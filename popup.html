@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Yamaha Auto PRO</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 12px;
+            width: 320px;
+            font-family: Arial, sans-serif;
+            background: #f7f7f9;
+            color: #222;
+        }
+        .box {
+            background: #fff;
+            border: 1px solid #e7e7e7;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 16px;
+            margin: 0 0 10px;
+            color: #e74c3c;
+        }
+        .row {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        input[type="number"], input[type="time"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #btn-save {
+            background: #6c5ce7;
+            color: #fff;
+            margin-top: 4px;
+        }
+        #btn-toggle {
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .enabled {
+            background: #27ae60;
+        }
+        .disabled {
+            background: #d63031;
+        }
+        .status {
+            font-size: 12px;
+            background: #f4f4f4;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .hint {
+            font-size: 11px;
+            color: #666;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>YAMAHA AUTO PRO V55.3.6</h1>
+
+        <button id="btn-toggle" class="enabled">ĐANG BẬT</button>
+
+        <div class="status" id="popup-status">
+            Đang tải trạng thái...
+        </div>
+
+        <div class="row">
+            <label for="set-max-jobs">Số phiếu</label>
+            <input id="set-max-jobs" type="number" min="1">
+        </div>
+
+        <div class="grid">
+            <div class="row">
+                <label for="set-start-time">Từ giờ</label>
+                <input id="set-start-time" type="time">
+            </div>
+            <div class="row">
+                <label for="set-end-time">Đến giờ</label>
+                <input id="set-end-time" type="time">
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="row">
+                <label for="set-min-delay">Delay min (s)</label>
+                <input id="set-min-delay" type="number" min="0">
+            </div>
+            <div class="row">
+                <label for="set-max-delay">Delay max (s)</label>
+                <input id="set-max-delay" type="number" min="0">
+            </div>
+        </div>
+
+        <div class="switch-row">
+            <span>Tự chia delay</span>
+            <input id="set-auto-schedule" type="checkbox">
+        </div>
+
+        <div class="switch-row">
+            <span>Lưu log Google Sheets + Docs</span>
+            <input id="set-log-enabled" type="checkbox">
+        </div>
+
+        <button id="btn-save">LƯU SETTINGS</button>
+        <div class="hint">Bấm icon extension để mở bảng này. Bật/tắt và settings đều được lưu lại.</div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
