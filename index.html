@@ -1,375 +1,355 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
-  />
-  <title>Đo size nhẫn</title>
-  <style>
-    * { box-sizing: border-box; }
+<meta charset="UTF-8" />
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+/>
+<title>Đo size nhẫn</title>
+<style>
+  * { box-sizing: border-box; }
 
-    :root {
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
+  :root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
 
-    html, body {
-      margin: 0;
-      padding: 0;
-      overscroll-behavior: none;
-      background: #f4f4f4;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #111;
-    }
+  html, body {
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+    background: #f4f4f4;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #111;
+  }
 
-    body.lock-interaction {
-      touch-action: pan-x pan-y;
-    }
+  .app {
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: #fff;
+    padding: calc(18px + var(--safe-top)) 16px calc(28px + var(--safe-bottom));
+  }
 
-    .app {
-      max-width: 430px;
-      margin: 0 auto;
-      min-height: 100vh;
-      background: #fff;
-      padding: calc(18px + var(--safe-top)) 16px calc(28px + var(--safe-bottom));
-    }
+  h1, h2, h3, p { margin: 0; }
 
-    h1, h2, h3, p {
-      margin: 0;
-    }
+  .header { margin-bottom: 16px; }
 
-    .header {
-      margin-bottom: 16px;
-    }
+  .header h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
 
-    .header h1 {
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
+  .header p {
+    font-size: 14px;
+    color: #444;
+    line-height: 1.5;
+  }
 
-    .header p {
-      font-size: 14px;
-      color: #444;
-      line-height: 1.5;
-    }
+  .card {
+    background: #fff;
+    border: 1px solid #dcdcdc;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
 
-    .card {
-      background: #fff;
-      border: 1px solid #dcdcdc;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
+  .badge {
+    display: inline-block;
+    background: #eaf2ff;
+    color: #0b57d0;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 6px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
 
-    .badge {
-      display: inline-block;
-      background: #eaf2ff;
-      color: #0b57d0;
-      font-size: 12px;
-      font-weight: bold;
-      padding: 6px 10px;
-      border-radius: 999px;
-      margin-bottom: 10px;
-    }
+  .sub {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #444;
+  }
 
-    .sub {
-      margin-top: 8px;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #444;
-    }
+  .option-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
 
-    .option-list {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-    }
+  .option {
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    padding: 14px;
+    background: #fff;
+    cursor: pointer;
+    transition: 0.15s;
+  }
 
-    .option {
-      border: 2px solid #ddd;
-      border-radius: 12px;
-      padding: 14px;
-      background: #fff;
-      cursor: pointer;
-      transition: 0.15s;
-    }
+  .option.active {
+    border-color: #0b57d0;
+    background: #f4f8ff;
+  }
 
-    .option.active {
-      border-color: #0b57d0;
-      background: #f4f8ff;
-    }
+  .option-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
 
-    .option-title {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
+  .option-sub {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.45;
+  }
 
-    .option-sub {
-      font-size: 13px;
-      color: #555;
-      line-height: 1.45;
-    }
+  .cal-box {
+    margin-top: 14px;
+    height: 62vh;
+    min-height: 420px;
+    max-height: 78vh;
+    border: 1px solid #dcdcdc;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(to right, rgba(11,87,208,.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(11,87,208,.08) 1px, transparent 1px),
+      #fafafa;
+    background-size: 14px 14px;
+  }
 
-    .cal-box {
-      margin-top: 14px;
-      height: 62vh;
-      min-height: 420px;
-      max-height: 78vh;
-      border: 1px solid #dcdcdc;
-      border-radius: 16px;
-      position: relative;
-      overflow: hidden;
-      background:
-        linear-gradient(to right, rgba(11,87,208,.08) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(11,87,208,.08) 1px, transparent 1px),
-        #fafafa;
-      background-size: 14px 14px;
-    }
+  .cal-object {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 78px;
+    height: 200px;
+    border: 3px solid #0b57d0;
+    border-radius: 14px;
+    background: rgba(11,87,208,.08);
+    max-height: calc(100% - 8px);
+  }
 
-    .cal-object {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 78px;
-      height: 200px;
-      border: 3px solid #0b57d0;
-      border-radius: 14px;
-      background: rgba(11,87,208,.08);
-      max-height: calc(100% - 8px);
-    }
+  .slider-wrap { margin-top: 14px; }
 
-    .slider-wrap {
-      margin-top: 14px;
-    }
+  .slider-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
 
-    .slider-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
+  .slider-head strong {
+    font-size: 15px;
+  }
 
-    .slider-head strong {
-      font-size: 15px;
-    }
+  input[type="range"] { width: 100%; }
 
-    input[type="range"] {
-      width: 100%;
-    }
+  input[type="number"] {
+    width: 100%;
+    padding: 12px 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 16px;
+  }
 
-    input[type="number"] {
-      width: 100%;
-      padding: 12px 10px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      font-size: 16px;
-    }
+  .info {
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #444;
+    background: #f8fbff;
+    border: 1px solid #d7e7ff;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
 
-    .info {
-      margin-top: 10px;
-      font-size: 13px;
-      line-height: 1.5;
-      color: #444;
-      background: #f8fbff;
-      border: 1px solid #d7e7ff;
-      padding: 10px 12px;
-      border-radius: 10px;
-    }
+  .warning {
+    margin-top: 10px;
+    color: #b00020;
+    font-size: 13px;
+    line-height: 1.45;
+  }
 
-    .warning {
-      margin-top: 10px;
-      color: #b00020;
-      font-size: 13px;
-      line-height: 1.45;
-    }
+  .hidden {
+    display: none !important;
+  }
 
-    .hidden {
-      display: none !important;
-    }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    margin-bottom: 12px;
+  }
 
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-top: 14px;
-      margin-bottom: 12px;
-    }
+  .tab {
+    flex: 1;
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+  }
 
-    .tab {
-      flex: 1;
-      border: 1px solid #ccc;
-      background: #fff;
-      padding: 12px;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+  .tab.active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+  }
 
-    .tab.active {
-      background: #111;
-      color: #fff;
-      border-color: #111;
-    }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
-    .tab-panel {
-      display: none;
-    }
+  .measure-area {
+    margin-top: 12px;
+    position: relative;
+    height: 230px;
+    border: 1px solid #dcdcdc;
+    border-radius: 14px;
+    overflow: hidden;
+    background:
+      linear-gradient(to right, rgba(11,87,208,.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(11,87,208,.08) 1px, transparent 1px),
+      #fafafa;
+    background-size: 14px 14px;
+  }
 
-    .tab-panel.active {
-      display: block;
-    }
+  .line {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #0b57d0;
+  }
 
-    .measure-area {
-      margin-top: 12px;
-      position: relative;
-      height: 230px;
-      border: 1px solid #dcdcdc;
-      border-radius: 14px;
-      overflow: hidden;
-      background:
-        linear-gradient(to right, rgba(11,87,208,.08) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(11,87,208,.08) 1px, transparent 1px),
-        #fafafa;
-      background-size: 14px 14px;
-    }
+  .line.top {
+    top: calc(50% - var(--gap, 70px) / 2);
+  }
 
-    .line {
-      position: absolute;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      background: #0b57d0;
-    }
+  .line.bottom {
+    top: calc(50% + var(--gap, 70px) / 2);
+  }
 
-    .line.top {
-      top: calc(50% - var(--gap, 70px) / 2);
-    }
+  .measure-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,.96);
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #0b57d0;
+  }
 
-    .line.bottom {
-      top: calc(50% + var(--gap, 70px) / 2);
-    }
+  .measure-label.left { left: 8px; }
+  .measure-label.right { right: 8px; }
 
-    .measure-label {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(255,255,255,.96);
-      border: 1px solid #ddd;
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 13px;
-      font-weight: bold;
-      color: #0b57d0;
-    }
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
 
-    .measure-label.left { left: 8px; }
-    .measure-label.right { right: 8px; }
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+  }
 
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-    }
+  .btn-primary {
+    flex: 1;
+    background: #111;
+    color: #fff;
+  }
 
-    .btn {
-      border: none;
-      border-radius: 12px;
-      padding: 14px 16px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+  .btn-secondary {
+    flex: 1;
+    background: #efefef;
+    color: #111;
+  }
 
-    .btn-primary {
-      flex: 1;
-      background: #111;
-      color: #fff;
-    }
+  .result {
+    margin-top: 14px;
+    background: #f8fbff;
+    border: 1px solid #d7e7ff;
+    border-radius: 12px;
+    padding: 14px;
+  }
 
-    .btn-secondary {
-      flex: 1;
-      background: #efefef;
-      color: #111;
-    }
+  .result h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
 
-    .result {
-      margin-top: 14px;
-      background: #f8fbff;
-      border: 1px solid #d7e7ff;
-      border-radius: 12px;
-      padding: 14px;
-    }
+  .result-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #e7eef8;
+    font-size: 15px;
+  }
 
-    .result h3 {
-      margin-bottom: 10px;
-      font-size: 18px;
-    }
+  .result-item:last-child {
+    border-bottom: none;
+  }
 
-    .result-item {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid #e7eef8;
-      font-size: 15px;
-    }
+  .note {
+    margin-top: 12px;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+  }
 
-    .result-item:last-child {
-      border-bottom: none;
-    }
+  .rotate-block {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+  }
 
-    .note {
-      margin-top: 12px;
-      font-size: 13px;
-      color: #666;
-      line-height: 1.5;
-    }
+  .rotate-block.hidden {
+    display: none !important;
+  }
 
-    .rotate-block {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px;
-    }
+  .rotate-content {
+    max-width: 320px;
+  }
 
-    .rotate-block.hidden {
-      display: none !important;
-    }
+  .rotate-content h3 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
 
-    .rotate-content {
-      max-width: 320px;
-    }
-
-    .rotate-content h3 {
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-
-    .rotate-content p {
-      font-size: 15px;
-      color: #444;
-      line-height: 1.6;
-    }
-  </style>
+  .rotate-content p {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.6;
+  }
+</style>
 </head>
 <body>
   <div id="rotateBlock" class="rotate-block hidden">
     <div class="rotate-content">
       <h3>Vui lòng xoay dọc màn hình</h3>
-      <p>
-        Sau khi calibrate, nếu xoay ngang hoặc thay đổi tỷ lệ hiển thị,
-        hệ thống sẽ yêu cầu calibrate lại để giữ độ chính xác.
-      </p>
+      <p>Sau khi calibrate, nếu thay đổi màn hình hoặc tỷ lệ hiển thị, hệ thống sẽ yêu cầu calibrate lại.</p>
     </div>
   </div>
 
@@ -378,7 +358,7 @@
       <h1>Đo size nhẫn</h1>
       <p>
         Mỗi lần mở web cần calibrate lại. Khung mẫu căn theo
-        <strong>chiều dọc</strong>, dùng đúng số bạn yêu cầu:
+        <strong>chiều dọc</strong>, dùng đúng số:
         <strong>CCCD = 53.98 mm</strong>,
         <strong>20.000đ = 65 mm</strong>.
       </p>
@@ -387,9 +367,7 @@
     <div class="card" id="step1">
       <div class="badge">BƯỚC 1</div>
       <h2>Chuẩn hoá màn hình</h2>
-      <p class="sub">
-        Chọn vật chuẩn, rồi kéo khung mẫu theo <strong>chiều dọc</strong> cho khớp.
-      </p>
+      <p class="sub">Chọn vật chuẩn, rồi kéo khung mẫu theo <strong>chiều dọc</strong> cho khớp.</p>
 
       <div class="option-list">
         <div class="option" data-mm="53.98" data-name="CCCD">
@@ -415,32 +393,23 @@
         <input type="range" id="calSlider" min="80" max="300" value="200" />
       </div>
 
-      <div class="info" id="calInfo">
-        Chiều cao tối đa khả dụng của khung mẫu trên máy này: --
-      </div>
+      <div class="info" id="calInfo">Chiều cao tối đa khả dụng của khung mẫu trên máy này: --</div>
 
-      <div class="warning hidden" id="calWarning">
-        Bạn cần chọn vật chuẩn trước khi tiếp tục.
-      </div>
+      <div class="warning hidden" id="calWarning">Bạn cần chọn vật chuẩn trước khi tiếp tục.</div>
 
       <div class="warning hidden" id="calSizeWarning">
         Màn hình hiện tại có thể không đủ không gian để căn vật này theo chiều dọc.
-        Hãy thu gọn thanh địa chỉ trình duyệt hoặc calibrate lại.
       </div>
 
       <div class="btn-row">
-        <button class="btn btn-primary" id="btnConfirmCalibrate">
-          Xác nhận calibrate
-        </button>
+        <button class="btn btn-primary" id="btnConfirmCalibrate">Xác nhận calibrate</button>
       </div>
     </div>
 
     <div class="card hidden" id="step2">
       <div class="badge">BƯỚC 2</div>
       <h2>Đo kích thước</h2>
-      <p class="sub">
-        Bạn có thể đo theo ngón tay trực tiếp hoặc nhập chu vi đã đo bằng giấy.
-      </p>
+      <p class="sub">Bạn có thể đo theo ngón tay trực tiếp hoặc nhập chu vi đã đo bằng giấy.</p>
 
       <div class="tabs">
         <button class="tab active" data-tab="finger">Theo ngón tay</button>
@@ -451,7 +420,6 @@
         <div class="measure-area" id="measureArea">
           <div class="line top"></div>
           <div class="line bottom"></div>
-
           <div class="measure-label left" id="leftMm">14.50 mm</div>
           <div class="measure-label right" id="rightMm">14.50 mm</div>
         </div>
@@ -461,29 +429,13 @@
             <strong>Đường kính đang đo</strong>
             <span id="fingerMmText">14.50 mm</span>
           </div>
-          <input
-            type="range"
-            id="fingerSlider"
-            min="10"
-            max="25"
-            step="0.01"
-            value="14.5"
-          />
+          <input type="range" id="fingerSlider" min="10" max="25" step="0.01" value="14.5" />
         </div>
       </div>
 
       <div class="tab-panel" id="panel-circumference">
-        <p class="sub" style="margin-bottom: 10px;">
-          Nhập chu vi ngón tay đã đo bằng giấy, đơn vị mm.
-        </p>
-        <input
-          type="number"
-          id="circumferenceInput"
-          placeholder="Ví dụ: 45"
-          min="30"
-          max="90"
-          step="0.01"
-        />
+        <p class="sub" style="margin-bottom: 10px;">Nhập chu vi ngón tay đã đo bằng giấy, đơn vị mm.</p>
+        <input type="number" id="circumferenceInput" placeholder="Ví dụ: 45" min="30" max="90" step="0.01" />
       </div>
 
       <div class="btn-row">
@@ -498,397 +450,388 @@
           <span>Vật chuẩn đã dùng</span>
           <strong id="resultReference">CCCD</strong>
         </div>
-
         <div class="result-item">
           <span>Đường kính</span>
           <strong id="resultDiameter">14.50 mm</strong>
         </div>
-
         <div class="result-item">
           <span>Chu vi</span>
           <strong id="resultCircumference">45.55 mm</strong>
         </div>
-
         <div class="result-item">
           <span>Size US</span>
           <strong id="resultUS">3.5</strong>
         </div>
-
         <div class="result-item">
           <span>Size VN</span>
           <strong id="resultVN">11</strong>
         </div>
 
-        <div class="note">
-          Đây là kết quả tham khảo. Nên đo lại 2–3 lần và ưu tiên đối chiếu thêm bằng chu vi giấy.
-        </div>
+        <div class="note">Đây là kết quả tham khảo. Nên đo lại 2–3 lần và ưu tiên đối chiếu thêm bằng chu vi giấy.</div>
       </div>
     </div>
   </div>
 
-  <script>
-    const state = {
-      referenceMM: 0,
-      referenceName: "",
-      mmPerPx: 0,
-      currentTab: "finger",
-      calMaxPx: 300,
-      calibrationLocked: false,
-      calibrationSnapshot: null
-    };
+<script>
+  const state = {
+    referenceMM: 0,
+    referenceName: "",
+    mmPerPx: 0,
+    currentTab: "finger",
+    calMaxPx: 300,
+    calibrationLocked: false,
+    calibrationSnapshot: null,
+    snapshotArmed: false
+  };
 
-    const optionEls = document.querySelectorAll(".option");
-    const calBox = document.getElementById("calBox");
-    const calObject = document.getElementById("calObject");
-    const calSlider = document.getElementById("calSlider");
-    const calTargetText = document.getElementById("calTargetText");
-    const calInfo = document.getElementById("calInfo");
-    const calWarning = document.getElementById("calWarning");
-    const calSizeWarning = document.getElementById("calSizeWarning");
-    const btnConfirmCalibrate = document.getElementById("btnConfirmCalibrate");
+  const CHANGE_TOLERANCE_PX = 80;
+  const SCALE_TOLERANCE = 0.03;
 
-    const step1 = document.getElementById("step1");
-    const step2 = document.getElementById("step2");
+  const optionEls = document.querySelectorAll(".option");
+  const calBox = document.getElementById("calBox");
+  const calObject = document.getElementById("calObject");
+  const calSlider = document.getElementById("calSlider");
+  const calTargetText = document.getElementById("calTargetText");
+  const calInfo = document.getElementById("calInfo");
+  const calWarning = document.getElementById("calWarning");
+  const calSizeWarning = document.getElementById("calSizeWarning");
+  const btnConfirmCalibrate = document.getElementById("btnConfirmCalibrate");
 
-    const fingerSlider = document.getElementById("fingerSlider");
-    const fingerMmText = document.getElementById("fingerMmText");
-    const leftMm = document.getElementById("leftMm");
-    const rightMm = document.getElementById("rightMm");
-    const measureArea = document.getElementById("measureArea");
+  const step1 = document.getElementById("step1");
+  const step2 = document.getElementById("step2");
 
-    const tabs = document.querySelectorAll(".tab");
-    const panelFinger = document.getElementById("panel-finger");
-    const panelCircumference = document.getElementById("panel-circumference");
-    const circumferenceInput = document.getElementById("circumferenceInput");
+  const fingerSlider = document.getElementById("fingerSlider");
+  const fingerMmText = document.getElementById("fingerMmText");
+  const leftMm = document.getElementById("leftMm");
+  const rightMm = document.getElementById("rightMm");
+  const measureArea = document.getElementById("measureArea");
 
-    const btnReset = document.getElementById("btnReset");
-    const btnShowResult = document.getElementById("btnShowResult");
+  const tabs = document.querySelectorAll(".tab");
+  const panelFinger = document.getElementById("panel-finger");
+  const panelCircumference = document.getElementById("panel-circumference");
+  const circumferenceInput = document.getElementById("circumferenceInput");
 
-    const resultBox = document.getElementById("resultBox");
-    const resultReference = document.getElementById("resultReference");
-    const resultDiameter = document.getElementById("resultDiameter");
-    const resultCircumference = document.getElementById("resultCircumference");
-    const resultUS = document.getElementById("resultUS");
-    const resultVN = document.getElementById("resultVN");
+  const btnReset = document.getElementById("btnReset");
+  const btnShowResult = document.getElementById("btnShowResult");
 
-    const rotateBlock = document.getElementById("rotateBlock");
+  const resultBox = document.getElementById("resultBox");
+  const resultReference = document.getElementById("resultReference");
+  const resultDiameter = document.getElementById("resultDiameter");
+  const resultCircumference = document.getElementById("resultCircumference");
+  const resultUS = document.getElementById("resultUS");
+  const resultVN = document.getElementById("resultVN");
 
-    function getUSSize(diameter) {
-      const sizes = [
-        { us: "3", mm: 14.1 },
-        { us: "3.5", mm: 14.5 },
-        { us: "4", mm: 14.9 },
-        { us: "4.5", mm: 15.3 },
-        { us: "5", mm: 15.7 },
-        { us: "5.5", mm: 16.1 },
-        { us: "6", mm: 16.5 },
-        { us: "6.5", mm: 16.9 },
-        { us: "7", mm: 17.3 },
-        { us: "7.5", mm: 17.7 },
-        { us: "8", mm: 18.1 },
-        { us: "8.5", mm: 18.5 },
-        { us: "9", mm: 18.9 },
-        { us: "9.5", mm: 19.4 },
-        { us: "10", mm: 19.8 },
-        { us: "10.5", mm: 20.2 },
-        { us: "11", mm: 20.6 },
-        { us: "11.5", mm: 21.0 },
-        { us: "12", mm: 21.4 }
-      ];
+  const rotateBlock = document.getElementById("rotateBlock");
 
-      let closest = sizes[0];
-      let minDiff = Math.abs(diameter - closest.mm);
+  function getUSSize(diameter) {
+    const sizes = [
+      { us: "3", mm: 14.1 }, { us: "3.5", mm: 14.5 }, { us: "4", mm: 14.9 },
+      { us: "4.5", mm: 15.3 }, { us: "5", mm: 15.7 }, { us: "5.5", mm: 16.1 },
+      { us: "6", mm: 16.5 }, { us: "6.5", mm: 16.9 }, { us: "7", mm: 17.3 },
+      { us: "7.5", mm: 17.7 }, { us: "8", mm: 18.1 }, { us: "8.5", mm: 18.5 },
+      { us: "9", mm: 18.9 }, { us: "9.5", mm: 19.4 }, { us: "10", mm: 19.8 },
+      { us: "10.5", mm: 20.2 }, { us: "11", mm: 20.6 }, { us: "11.5", mm: 21.0 },
+      { us: "12", mm: 21.4 }
+    ];
 
-      for (const item of sizes) {
-        const diff = Math.abs(diameter - item.mm);
-        if (diff < minDiff) {
-          minDiff = diff;
-          closest = item;
-        }
-      }
-      return closest.us;
-    }
+    let closest = sizes[0];
+    let minDiff = Math.abs(diameter - closest.mm);
 
-    function getVNSize(diameter) {
-      return Math.max(1, Math.round((diameter - 10) * 2.5));
-    }
-
-    function setupCalibrationRange() {
-      const boxHeight = calBox.clientHeight;
-      const usableMax = Math.max(120, Math.floor(boxHeight - 8));
-      state.calMaxPx = usableMax;
-
-      calSlider.max = usableMax;
-      if (parseFloat(calSlider.value) > usableMax) {
-        calSlider.value = usableMax;
-      }
-
-      calInfo.textContent =
-        "Chiều cao tối đa khả dụng của khung mẫu trên máy này: " +
-        usableMax + " px";
-    }
-
-    function updateCalibrateUI() {
-      const pxHeight = parseFloat(calSlider.value);
-      calObject.style.height = pxHeight + "px";
-
-      if (state.referenceMM > 0) {
-        calTargetText.textContent = state.referenceMM.toFixed(2) + " mm";
-      } else {
-        calTargetText.textContent = "-- mm";
-      }
-
-      if (state.referenceMM > 0) {
-        const isAtMax = pxHeight >= state.calMaxPx - 1;
-        calSizeWarning.classList.toggle("hidden", !isAtMax);
-      } else {
-        calSizeWarning.classList.add("hidden");
+    for (const item of sizes) {
+      const diff = Math.abs(diameter - item.mm);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = item;
       }
     }
+    return closest.us;
+  }
 
-    function updateFingerUI() {
-      const diameterMM = parseFloat(fingerSlider.value);
-      fingerMmText.textContent = diameterMM.toFixed(2) + " mm";
-      leftMm.textContent = diameterMM.toFixed(2) + " mm";
-      rightMm.textContent = diameterMM.toFixed(2) + " mm";
+  function getVNSize(diameter) {
+    return Math.max(1, Math.round((diameter - 10) * 2.5));
+  }
 
-      if (state.mmPerPx > 0) {
-        const gapPx = diameterMM / state.mmPerPx;
-        measureArea.style.setProperty("--gap", gapPx + "px");
-      }
+  function setupCalibrationRange() {
+    const boxHeight = calBox.clientHeight;
+    const usableMax = Math.max(120, Math.floor(boxHeight - 8));
+    state.calMaxPx = usableMax;
+
+    calSlider.max = usableMax;
+    if (parseFloat(calSlider.value) > usableMax) {
+      calSlider.value = usableMax;
     }
 
-    function takeViewportSnapshot() {
-      return {
-        width: window.innerWidth,
-        height: window.innerHeight,
-        dpr: window.devicePixelRatio || 1,
-        visualWidth: window.visualViewport ? Math.round(window.visualViewport.width) : window.innerWidth,
-        visualHeight: window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight,
-        scale: window.visualViewport ? Number(window.visualViewport.scale.toFixed(3)) : 1,
-        orientation:
-          (screen.orientation && screen.orientation.type) ||
-          (window.innerWidth > window.innerHeight ? "landscape" : "portrait")
-      };
+    calInfo.textContent =
+      "Chiều cao tối đa khả dụng của khung mẫu trên máy này: " +
+      usableMax + " px";
+  }
+
+  function updateCalibrateUI() {
+    const pxHeight = parseFloat(calSlider.value);
+    calObject.style.height = pxHeight + "px";
+
+    if (state.referenceMM > 0) {
+      calTargetText.textContent = state.referenceMM.toFixed(2) + " mm";
+    } else {
+      calTargetText.textContent = "-- mm";
     }
 
-    function snapshotChanged(a, b) {
-      return (
-        a.width !== b.width ||
-        a.height !== b.height ||
-        a.dpr !== b.dpr ||
-        a.visualWidth !== b.visualWidth ||
-        a.visualHeight !== b.visualHeight ||
-        a.scale !== b.scale ||
-        a.orientation !== b.orientation
-      );
-    }
-
-    async function tryLockPortrait() {
-      try {
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock("portrait");
-        }
-      } catch (err) {
-        // Trình duyệt có thể không hỗ trợ hoặc từ chối
-      }
-    }
-
-    async function lockAfterCalibration() {
-      state.calibrationSnapshot = takeViewportSnapshot();
-      state.calibrationLocked = true;
-      document.body.classList.add("lock-interaction");
-      await tryLockPortrait();
-    }
-
-    function unlockCalibrationState() {
-      state.calibrationLocked = false;
-      state.calibrationSnapshot = null;
-      if (screen.orientation && screen.orientation.unlock) {
-        try {
-          screen.orientation.unlock();
-        } catch (err) {}
-      }
-    }
-
-    function checkPortraitOverlay() {
-      const isLandscape = window.innerWidth > window.innerHeight;
-      rotateBlock.classList.toggle("hidden", !isLandscape);
-    }
-
-    function resetAll(showAlert = false) {
-      unlockCalibrationState();
-
-      state.referenceMM = 0;
-      state.referenceName = "";
-      state.mmPerPx = 0;
-      state.currentTab = "finger";
-
-      optionEls.forEach(el => el.classList.remove("active"));
-      setupCalibrationRange();
-      calSlider.value = Math.min(200, state.calMaxPx);
-      fingerSlider.value = 14.5;
-      circumferenceInput.value = "";
-      resultBox.classList.add("hidden");
-      calWarning.classList.add("hidden");
+    if (state.referenceMM > 0) {
+      const isAtMax = pxHeight >= state.calMaxPx - 1;
+      calSizeWarning.classList.toggle("hidden", !isAtMax);
+    } else {
       calSizeWarning.classList.add("hidden");
-
-      tabs.forEach(tab => tab.classList.remove("active"));
-      document.querySelector('[data-tab="finger"]').classList.add("active");
-      panelFinger.classList.add("active");
-      panelCircumference.classList.remove("active");
-
-      step1.classList.remove("hidden");
-      step2.classList.add("hidden");
-
-      updateCalibrateUI();
-      updateFingerUI();
-      checkPortraitOverlay();
-
-      if (showAlert) {
-        alert("Màn hình hoặc tỷ lệ hiển thị đã thay đổi. Bạn cần calibrate lại.");
-      }
     }
+  }
 
-    function handleViewportChange() {
-      checkPortraitOverlay();
+  function updateFingerUI() {
+    const diameterMM = parseFloat(fingerSlider.value);
+    fingerMmText.textContent = diameterMM.toFixed(2) + " mm";
+    leftMm.textContent = diameterMM.toFixed(2) + " mm";
+    rightMm.textContent = diameterMM.toFixed(2) + " mm";
 
-      if (!state.calibrationLocked || !state.calibrationSnapshot) return;
-
-      const current = takeViewportSnapshot();
-      if (snapshotChanged(state.calibrationSnapshot, current)) {
-        resetAll(true);
-      }
+    if (state.mmPerPx > 0) {
+      const gapPx = diameterMM / state.mmPerPx;
+      measureArea.style.setProperty("--gap", gapPx + "px");
     }
+  }
 
-    optionEls.forEach(el => {
-      el.addEventListener("click", () => {
-        optionEls.forEach(item => item.classList.remove("active"));
-        el.classList.add("active");
-        state.referenceMM = parseFloat(el.dataset.mm);
-        state.referenceName = el.dataset.name;
-        calWarning.classList.add("hidden");
-        updateCalibrateUI();
+  function takeViewportSnapshot() {
+    return {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      dpr: window.devicePixelRatio || 1,
+      visualWidth: window.visualViewport ? Math.round(window.visualViewport.width) : window.innerWidth,
+      visualHeight: window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight,
+      scale: window.visualViewport ? Number(window.visualViewport.scale.toFixed(3)) : 1,
+      orientation:
+        (screen.orientation && screen.orientation.type) ||
+        (window.innerWidth > window.innerHeight ? "landscape" : "portrait")
+    };
+  }
+
+  function snapshotChanged(a, b) {
+    const widthChanged = Math.abs(a.width - b.width) > CHANGE_TOLERANCE_PX;
+    const heightChanged = Math.abs(a.height - b.height) > CHANGE_TOLERANCE_PX;
+    const visualWidthChanged = Math.abs(a.visualWidth - b.visualWidth) > CHANGE_TOLERANCE_PX;
+    const visualHeightChanged = Math.abs(a.visualHeight - b.visualHeight) > CHANGE_TOLERANCE_PX;
+    const dprChanged = a.dpr !== b.dpr;
+    const scaleChanged = Math.abs(a.scale - b.scale) > SCALE_TOLERANCE;
+    const orientationChanged = a.orientation !== b.orientation;
+
+    return (
+      widthChanged ||
+      heightChanged ||
+      visualWidthChanged ||
+      visualHeightChanged ||
+      dprChanged ||
+      scaleChanged ||
+      orientationChanged
+    );
+  }
+
+  async function tryLockPortrait() {
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock("portrait");
+      }
+    } catch (err) {}
+  }
+
+  async function armCalibrationGuard() {
+    state.calibrationLocked = true;
+    state.snapshotArmed = false;
+
+    await tryLockPortrait();
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        state.calibrationSnapshot = takeViewportSnapshot();
+        state.snapshotArmed = true;
       });
     });
+  }
 
-    calSlider.addEventListener("input", updateCalibrateUI);
-    fingerSlider.addEventListener("input", updateFingerUI);
+  function unlockCalibrationState() {
+    state.calibrationLocked = false;
+    state.calibrationSnapshot = null;
+    state.snapshotArmed = false;
 
-    btnConfirmCalibrate.addEventListener("click", async () => {
-      if (!state.referenceMM) {
-        calWarning.classList.remove("hidden");
-        return;
-      }
-
-      const pxHeight = parseFloat(calSlider.value);
-      if (!pxHeight || pxHeight <= 0) return;
-
-      state.mmPerPx = state.referenceMM / pxHeight;
-
-      await lockAfterCalibration();
-
-      step1.classList.add("hidden");
-      step2.classList.remove("hidden");
-      resultBox.classList.add("hidden");
-
-      updateFingerUI();
-      checkPortraitOverlay();
-    });
-
-    tabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        tabs.forEach(item => item.classList.remove("active"));
-        tab.classList.add("active");
-
-        state.currentTab = tab.dataset.tab;
-
-        if (state.currentTab === "finger") {
-          panelFinger.classList.add("active");
-          panelCircumference.classList.remove("active");
-        } else {
-          panelFinger.classList.remove("active");
-          panelCircumference.classList.add("active");
-        }
-
-        resultBox.classList.add("hidden");
-      });
-    });
-
-    btnShowResult.addEventListener("click", () => {
-      if (!state.mmPerPx) {
-        resetAll();
-        return;
-      }
-
-      let diameter = 0;
-      let circumference = 0;
-
-      if (state.currentTab === "finger") {
-        diameter = parseFloat(fingerSlider.value);
-        circumference = Math.PI * diameter;
-      } else {
-        circumference = parseFloat(circumferenceInput.value);
-
-        if (!circumference || circumference <= 0) {
-          alert("Vui lòng nhập chu vi hợp lệ, đơn vị mm.");
-          return;
-        }
-
-        diameter = circumference / Math.PI;
-      }
-
-      const us = getUSSize(diameter);
-      const vn = getVNSize(diameter);
-
-      resultReference.textContent = state.referenceName;
-      resultDiameter.textContent = diameter.toFixed(2) + " mm";
-      resultCircumference.textContent = circumference.toFixed(2) + " mm";
-      resultUS.textContent = us;
-      resultVN.textContent = vn;
-
-      resultBox.classList.remove("hidden");
-      resultBox.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-
-    btnReset.addEventListener("click", () => resetAll(false));
-
-    window.addEventListener("resize", () => {
-      setupCalibrationRange();
-      handleViewportChange();
-      updateCalibrateUI();
-    });
-
-    window.addEventListener("orientationchange", () => {
-      setTimeout(() => {
-        setupCalibrationRange();
-        handleViewportChange();
-        updateCalibrateUI();
-      }, 100);
-    });
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", handleViewportChange);
-      window.visualViewport.addEventListener("scroll", handleViewportChange);
+    if (screen.orientation && screen.orientation.unlock) {
+      try {
+        screen.orientation.unlock();
+      } catch (err) {}
     }
+  }
 
-    document.addEventListener("gesturestart", function (e) {
-      e.preventDefault();
-    }, { passive: false });
+  function checkPortraitOverlay() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    rotateBlock.classList.toggle("hidden", !isLandscape);
+  }
 
-    document.addEventListener("gesturechange", function (e) {
-      e.preventDefault();
-    }, { passive: false });
+  function resetAll(showAlert = false) {
+    unlockCalibrationState();
 
-    document.addEventListener("gestureend", function (e) {
-      e.preventDefault();
-    }, { passive: false });
+    state.referenceMM = 0;
+    state.referenceName = "";
+    state.mmPerPx = 0;
+    state.currentTab = "finger";
 
+    optionEls.forEach(el => el.classList.remove("active"));
     setupCalibrationRange();
     calSlider.value = Math.min(200, state.calMaxPx);
+    fingerSlider.value = 14.5;
+    circumferenceInput.value = "";
+    resultBox.classList.add("hidden");
+    calWarning.classList.add("hidden");
+    calSizeWarning.classList.add("hidden");
+
+    tabs.forEach(tab => tab.classList.remove("active"));
+    document.querySelector('[data-tab="finger"]').classList.add("active");
+    panelFinger.classList.add("active");
+    panelCircumference.classList.remove("active");
+
+    step1.classList.remove("hidden");
+    step2.classList.add("hidden");
+
     updateCalibrateUI();
     updateFingerUI();
     checkPortraitOverlay();
-  </script>
+
+    if (showAlert) {
+      alert("Màn hình hoặc tỷ lệ hiển thị đã thay đổi. Bạn cần calibrate lại.");
+    }
+  }
+
+  function handleViewportChange() {
+    checkPortraitOverlay();
+
+    if (!state.calibrationLocked || !state.calibrationSnapshot || !state.snapshotArmed) return;
+
+    const current = takeViewportSnapshot();
+    if (snapshotChanged(state.calibrationSnapshot, current)) {
+      resetAll(true);
+    }
+  }
+
+  optionEls.forEach(el => {
+    el.addEventListener("click", () => {
+      optionEls.forEach(item => item.classList.remove("active"));
+      el.classList.add("active");
+      state.referenceMM = parseFloat(el.dataset.mm);
+      state.referenceName = el.dataset.name;
+      calWarning.classList.add("hidden");
+      updateCalibrateUI();
+    });
+  });
+
+  calSlider.addEventListener("input", updateCalibrateUI);
+  fingerSlider.addEventListener("input", updateFingerUI);
+
+  btnConfirmCalibrate.addEventListener("click", async () => {
+    if (!state.referenceMM) {
+      calWarning.classList.remove("hidden");
+      return;
+    }
+
+    const pxHeight = parseFloat(calSlider.value);
+    if (!pxHeight || pxHeight <= 0) return;
+
+    state.mmPerPx = state.referenceMM / pxHeight;
+
+    step1.classList.add("hidden");
+    step2.classList.remove("hidden");
+    resultBox.classList.add("hidden");
+
+    updateFingerUI();
+    checkPortraitOverlay();
+
+    await armCalibrationGuard();
+  });
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(item => item.classList.remove("active"));
+      tab.classList.add("active");
+
+      state.currentTab = tab.dataset.tab;
+
+      if (state.currentTab === "finger") {
+        panelFinger.classList.add("active");
+        panelCircumference.classList.remove("active");
+      } else {
+        panelFinger.classList.remove("active");
+        panelCircumference.classList.add("active");
+      }
+
+      resultBox.classList.add("hidden");
+    });
+  });
+
+  btnShowResult.addEventListener("click", () => {
+    if (!state.mmPerPx) {
+      resetAll();
+      return;
+    }
+
+    let diameter = 0;
+    let circumference = 0;
+
+    if (state.currentTab === "finger") {
+      diameter = parseFloat(fingerSlider.value);
+      circumference = Math.PI * diameter;
+    } else {
+      circumference = parseFloat(circumferenceInput.value);
+      if (!circumference || circumference <= 0) {
+        alert("Vui lòng nhập chu vi hợp lệ, đơn vị mm.");
+        return;
+      }
+      diameter = circumference / Math.PI;
+    }
+
+    const us = getUSSize(diameter);
+    const vn = getVNSize(diameter);
+
+    resultReference.textContent = state.referenceName;
+    resultDiameter.textContent = diameter.toFixed(2) + " mm";
+    resultCircumference.textContent = circumference.toFixed(2) + " mm";
+    resultUS.textContent = us;
+    resultVN.textContent = vn;
+
+    resultBox.classList.remove("hidden");
+    resultBox.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  btnReset.addEventListener("click", () => resetAll(false));
+
+  window.addEventListener("resize", () => {
+    setupCalibrationRange();
+    handleViewportChange();
+    updateCalibrateUI();
+  });
+
+  window.addEventListener("orientationchange", () => {
+    setTimeout(() => {
+      setupCalibrationRange();
+      handleViewportChange();
+      updateCalibrateUI();
+    }, 150);
+  });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", handleViewportChange);
+    window.visualViewport.addEventListener("scroll", handleViewportChange);
+  }
+
+  document.addEventListener("gesturestart", e => e.preventDefault(), { passive: false });
+  document.addEventListener("gesturechange", e => e.preventDefault(), { passive: false });
+  document.addEventListener("gestureend", e => e.preventDefault(), { passive: false });
+
+  setupCalibrationRange();
+  calSlider.value = Math.min(200, state.calMaxPx);
+  updateCalibrateUI();
+  updateFingerUI();
+  checkPortraitOverlay();
+</script>
 </body>
 </html>
