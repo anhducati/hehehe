@@ -2,110 +2,430 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Đo size nhẫn</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f4f4f4; color: #111; }
-    .app { max-width: 430px; margin: 0 auto; min-height: 100vh; background: #fff; padding: 18px 16px 28px; }
-    h1, h2, h3, p { margin: 0; }
-    .header { margin-bottom: 16px; }
-    .header h1 { font-size: 28px; margin-bottom: 8px; }
-    .header p { font-size: 14px; color: #444; line-height: 1.5; }
-    .card { background: #fff; border: 1px solid #dcdcdc; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-    .badge { display: inline-block; background: #eaf2ff; color: #0b57d0; font-size: 12px; font-weight: bold; padding: 6px 10px; border-radius: 999px; margin-bottom: 10px; }
-    .sub { margin-top: 8px; font-size: 14px; line-height: 1.5; color: #444; }
-    .option-list { display: grid; gap: 10px; margin-top: 14px; }
-    .option { border: 2px solid #ddd; border-radius: 12px; padding: 14px; background: #fff; cursor: pointer; transition: 0.15s; }
-    .option.active { border-color: #0b57d0; background: #f4f8ff; }
-    .option-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
-    .option-sub { font-size: 13px; color: #555; line-height: 1.45; }
-    .cal-box { margin-top: 14px; height: 420px; border: 1px solid #dcdcdc; border-radius: 16px; position: relative; overflow: hidden; background: linear-gradient(to right, rgba(11,87,208,.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(11,87,208,.08) 1px, transparent 1px), #fafafa; background-size: 14px 14px; }
-    .cal-object { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 70px; height: 180px; max-height: calc(100% - 24px); border: 3px solid #0b57d0; border-radius: 12px; background: rgba(11,87,208,.08); }
-    .cal-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; text-align: center; padding: 20px; color: #444; font-size: 14px; line-height: 1.55; }
-    .slider-wrap { margin-top: 14px; }
-    .slider-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; }
-    .slider-head strong { font-size: 15px; }
-    
-    /* Thêm style cho nút tinh chỉnh */
-    .controls-row { display: flex; align-items: center; gap: 8px; }
-    .btn-step { width: 40px; height: 40px; border: 1px solid #ccc; background: #fff; border-radius: 8px; font-size: 20px; cursor: pointer; font-weight: bold; }
-    
-    input[type="range"] { flex: 1; height: 30px; }
-    input[type="number"] { width: 100%; padding: 12px 10px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px; }
-    .warning { margin-top: 10px; color: #b00020; font-size: 13px; line-height: 1.45; }
-    .hidden { display: none; }
-    .tabs { display: flex; gap: 8px; margin-top: 14px; margin-bottom: 12px; }
-    .tab { flex: 1; border: 1px solid #ccc; background: #fff; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-    .tab.active { background: #111; color: #fff; border-color: #111; }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-    .measure-area { margin-top: 12px; position: relative; height: 230px; border: 1px solid #dcdcdc; border-radius: 14px; overflow: hidden; background: linear-gradient(to right, rgba(11,87,208,.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(11,87,208,.08) 1px, transparent 1px), #fafafa; background-size: 14px 14px; }
-    .line { position: absolute; left: 0; width: 100%; height: 4px; background: #0b57d0; }
-    .line.top { top: calc(50% - var(--gap, 70px) / 2); }
-    .line.bottom { top: calc(50% + var(--gap, 70px) / 2); }
-    .measure-label { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,.96); border: 1px solid #ddd; border-radius: 999px; padding: 7px 10px; font-size: 13px; font-weight: bold; color: #0b57d0; }
+
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f4f4;
+      color: #111;
+    }
+
+    .app {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #fff;
+      padding: calc(18px + var(--safe-top)) 16px calc(28px + var(--safe-bottom));
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    .header {
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: #444;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #dcdcdc;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #eaf2ff;
+      color: #0b57d0;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    .sub {
+      margin-top: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #444;
+    }
+
+    .option-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .option {
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .option.active {
+      border-color: #0b57d0;
+      background: #f4f8ff;
+    }
+
+    .option-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .option-sub {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.45;
+    }
+
+    .cal-box {
+      margin-top: 14px;
+      height: 62vh;
+      min-height: 420px;
+      max-height: 78vh;
+      border: 1px solid #dcdcdc;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(to right, rgba(11,87,208,.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(11,87,208,.08) 1px, transparent 1px),
+        #fafafa;
+      background-size: 14px 14px;
+    }
+
+    .cal-object {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 78px;
+      height: 200px;
+      border: 3px solid #0b57d0;
+      border-radius: 14px;
+      background: rgba(11,87,208,.08);
+      max-height: calc(100% - 8px);
+    }
+
+    .cal-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      text-align: center;
+      padding: 20px;
+      color: #444;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .slider-wrap {
+      margin-top: 14px;
+    }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .slider-head strong {
+      font-size: 15px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .info {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #444;
+      background: #f8fbff;
+      border: 1px solid #d7e7ff;
+      padding: 10px 12px;
+      border-radius: 10px;
+    }
+
+    .warning {
+      margin-top: 10px;
+      color: #b00020;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      flex: 1;
+      border: 1px solid #ccc;
+      background: #fff;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .measure-area {
+      margin-top: 12px;
+      position: relative;
+      height: 230px;
+      border: 1px solid #dcdcdc;
+      border-radius: 14px;
+      overflow: hidden;
+      background:
+        linear-gradient(to right, rgba(11,87,208,.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(11,87,208,.08) 1px, transparent 1px),
+        #fafafa;
+      background-size: 14px 14px;
+    }
+
+    .line {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: #0b57d0;
+    }
+
+    .line.top {
+      top: calc(50% - var(--gap, 70px) / 2);
+    }
+
+    .line.bottom {
+      top: calc(50% + var(--gap, 70px) / 2);
+    }
+
+    .measure-label {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,.96);
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #0b57d0;
+    }
+
     .measure-label.left { left: 8px; }
     .measure-label.right { right: 8px; }
-    .center-label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; background: rgba(255,255,255,.95); border: 1px solid #e5e5e5; border-radius: 12px; padding: 10px 14px; width: calc(100% - 80px); max-width: 270px; font-size: 15px; line-height: 1.45; color: #333; }
-    .btn-row { display: flex; gap: 10px; margin-top: 14px; }
-    .btn { border: none; border-radius: 12px; padding: 14px 16px; font-size: 15px; font-weight: bold; cursor: pointer; }
-    .btn-primary { flex: 1; background: #111; color: #fff; }
-    .btn-secondary { flex: 1; background: #efefef; color: #111; }
-    .result { margin-top: 14px; background: #f8fbff; border: 1px solid #d7e7ff; border-radius: 12px; padding: 14px; }
-    .result h3 { margin-bottom: 10px; font-size: 18px; }
-    .result-item { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #e7eef8; font-size: 15px; }
-    .result-item:last-child { border-bottom: none; }
-    .note { margin-top: 12px; font-size: 13px; color: #666; line-height: 1.5; }
+
+    .center-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      background: rgba(255,255,255,.95);
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 10px 14px;
+      width: calc(100% - 80px);
+      max-width: 270px;
+      font-size: 15px;
+      line-height: 1.45;
+      color: #333;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: #111;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      background: #efefef;
+      color: #111;
+    }
+
+    .result {
+      margin-top: 14px;
+      background: #f8fbff;
+      border: 1px solid #d7e7ff;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .result h3 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #e7eef8;
+      font-size: 15px;
+    }
+
+    .result-item:last-child {
+      border-bottom: none;
+    }
+
+    .note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <div class="header">
       <h1>Đo size nhẫn</h1>
-      <p>Mỗi lần mở web cần calibrate lại. Khung mẫu căn theo <strong>chiều dọc</strong>.</p>
+      <p>
+        Mỗi lần mở web cần calibrate lại. Khung mẫu căn theo
+        <strong>chiều dọc</strong>, dùng đúng số bạn yêu cầu:
+        <strong>CCCD = 53.98 mm</strong>,
+        <strong>20.000đ = 65 mm</strong>.
+      </p>
     </div>
 
     <div class="card" id="step1">
       <div class="badge">BƯỚC 1</div>
       <h2>Chuẩn hoá màn hình</h2>
+      <p class="sub">
+        Chọn vật chuẩn, rồi kéo khung mẫu theo <strong>chiều dọc</strong> cho khớp.
+      </p>
+
       <div class="option-list">
         <div class="option" data-mm="53.98" data-name="CCCD">
           <div class="option-title">CCCD</div>
-          <div class="option-sub">Giá trị chuẩn: 53.98 mm</div>
+          <div class="option-sub">Giá trị chuẩn dùng để căn: 53.98 mm</div>
         </div>
+
         <div class="option" data-mm="65" data-name="Tờ 20.000đ">
           <div class="option-title">Tờ 20.000đ</div>
-          <div class="option-sub">Giá trị chuẩn: 65 mm</div>
+          <div class="option-sub">Giá trị chuẩn dùng để căn: 65 mm</div>
         </div>
       </div>
 
-      <div class="cal-box">
+      <div class="cal-box" id="calBox">
         <div class="cal-object" id="calObject"></div>
-        <div class="cal-text">Kéo khung mẫu khớp <strong>chiều dọc</strong> vật thật</div>
+        <div class="cal-text">
+          Đặt vật thật lên màn hình<br />
+          rồi kéo cho khớp <strong>chiều dọc</strong> của khung mẫu
+        </div>
       </div>
 
       <div class="slider-wrap">
         <div class="slider-head">
-          <strong>Căn chỉnh (px)</strong>
+          <strong>Mục tiêu cần căn</strong>
           <span id="calTargetText">-- mm</span>
         </div>
-        <div class="controls-row">
-          <button class="btn-step" onclick="adjustCal(-1)">-</button>
-          <input type="range" id="calSlider" min="100" max="1000" value="300" />
-          <button class="btn-step" onclick="adjustCal(1)">+</button>
-        </div>
+        <input type="range" id="calSlider" min="80" max="300" value="200" />
       </div>
 
-      <div class="warning hidden" id="calWarning">Chọn vật chuẩn trước khi tiếp tục.</div>
+      <div class="info" id="calInfo">
+        Chiều cao tối đa khả dụng của khung mẫu trên máy này: --
+      </div>
+
+      <div class="warning hidden" id="calWarning">
+        Bạn cần chọn vật chuẩn trước khi tiếp tục.
+      </div>
+
+      <div class="warning hidden" id="calSizeWarning">
+        Màn hình hiện tại có thể không đủ không gian để căn vật này theo chiều dọc. Hãy giảm thanh địa chỉ trình duyệt hoặc xoay màn hình nếu cần.
+      </div>
+
       <div class="btn-row">
-        <button class="btn btn-primary" id="btnConfirmCalibrate">Xác nhận calibrate</button>
+        <button class="btn btn-primary" id="btnConfirmCalibrate">
+          Xác nhận calibrate
+        </button>
       </div>
     </div>
 
     <div class="card hidden" id="step2">
       <div class="badge">BƯỚC 2</div>
       <h2>Đo kích thước</h2>
+      <p class="sub">
+        Bạn có thể đo theo ngón tay trực tiếp hoặc nhập chu vi đã đo bằng giấy.
+      </p>
+
       <div class="tabs">
         <button class="tab active" data-tab="finger">Theo ngón tay</button>
         <button class="tab" data-tab="circumference">Theo chu vi giấy</button>
@@ -115,26 +435,44 @@
         <div class="measure-area" id="measureArea">
           <div class="line top"></div>
           <div class="line bottom"></div>
-          <div class="measure-label left" id="leftMm">16.50 mm</div>
-          <div class="measure-label right" id="rightMm">16.50 mm</div>
-          <div class="center-label">Căn vạch xanh vừa chạm mép ngón tay</div>
+
+          <div class="measure-label left" id="leftMm">14.50 mm</div>
+          <div class="measure-label right" id="rightMm">14.50 mm</div>
+
+          <div class="center-label">
+            Đặt phần to nhất của ngón tay vào giữa<br />
+            rồi kéo cho 2 vạch xanh vừa chạm mép ngón
+          </div>
         </div>
 
         <div class="slider-wrap">
           <div class="slider-head">
-            <strong>Đường kính (mm)</strong>
-            <span id="fingerMmText">16.50 mm</span>
+            <strong>Đường kính đang đo</strong>
+            <span id="fingerMmText">14.50 mm</span>
           </div>
-          <div class="controls-row">
-            <button class="btn-step" onclick="adjustFinger(-0.1)">-</button>
-            <input type="range" id="fingerSlider" min="13" max="24" step="0.01" value="16.5" />
-            <button class="btn-step" onclick="adjustFinger(0.1)">+</button>
-          </div>
+          <input
+            type="range"
+            id="fingerSlider"
+            min="10"
+            max="25"
+            step="0.01"
+            value="14.5"
+          />
         </div>
       </div>
 
       <div class="tab-panel" id="panel-circumference">
-        <input type="number" id="circumferenceInput" placeholder="Nhập chu vi (mm)" />
+        <p class="sub" style="margin-bottom: 10px;">
+          Nhập chu vi ngón tay đã đo bằng giấy, đơn vị mm.
+        </p>
+        <input
+          type="number"
+          id="circumferenceInput"
+          placeholder="Ví dụ: 45"
+          min="30"
+          max="90"
+          step="0.01"
+        />
       </div>
 
       <div class="btn-row">
@@ -144,54 +482,157 @@
 
       <div class="result hidden" id="resultBox">
         <h3>Kết quả tham khảo</h3>
-        <div class="result-item"><span>Vật chuẩn:</span><strong id="resultReference">--</strong></div>
-        <div class="result-item"><span>Đường kính:</span><strong id="resultDiameter">--</strong></div>
-        <div class="result-item"><span>Chu vi:</span><strong id="resultCircumference">--</strong></div>
-        <div class="result-item"><span>Size VN:</span><strong id="resultVN" style="color:#0b57d0">--</strong></div>
+
+        <div class="result-item">
+          <span>Vật chuẩn đã dùng</span>
+          <strong id="resultReference">CCCD</strong>
+        </div>
+
+        <div class="result-item">
+          <span>Đường kính</span>
+          <strong id="resultDiameter">14.50 mm</strong>
+        </div>
+
+        <div class="result-item">
+          <span>Chu vi</span>
+          <strong id="resultCircumference">45.55 mm</strong>
+        </div>
+
+        <div class="result-item">
+          <span>Size US</span>
+          <strong id="resultUS">3.5</strong>
+        </div>
+
+        <div class="result-item">
+          <span>Size VN</span>
+          <strong id="resultVN">11</strong>
+        </div>
+
+        <div class="note">
+          Đây là kết quả tham khảo. Nên đo lại 2–3 lần và ưu tiên đối chiếu thêm bằng chu vi giấy.
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const state = { referenceMM: 0, referenceName: "", mmPerPx: 0, currentTab: "finger" };
-    
-    // Hàm hỗ trợ tinh chỉnh cho nút bấm
-    function adjustCal(delta) {
-        const s = document.getElementById("calSlider");
-        s.value = parseInt(s.value) + delta;
-        updateCalibrateUI();
-    }
-    function adjustFinger(delta) {
-        const s = document.getElementById("fingerSlider");
-        s.value = (parseFloat(s.value) + delta).toFixed(2);
-        updateFingerUI();
-    }
+    const state = {
+      referenceMM: 0,
+      referenceName: "",
+      mmPerPx: 0,
+      currentTab: "finger",
+      calMaxPx: 300
+    };
 
     const optionEls = document.querySelectorAll(".option");
+    const calBox = document.getElementById("calBox");
     const calObject = document.getElementById("calObject");
     const calSlider = document.getElementById("calSlider");
     const calTargetText = document.getElementById("calTargetText");
+    const calInfo = document.getElementById("calInfo");
     const calWarning = document.getElementById("calWarning");
+    const calSizeWarning = document.getElementById("calSizeWarning");
     const btnConfirmCalibrate = document.getElementById("btnConfirmCalibrate");
+
     const step1 = document.getElementById("step1");
     const step2 = document.getElementById("step2");
+
     const fingerSlider = document.getElementById("fingerSlider");
     const fingerMmText = document.getElementById("fingerMmText");
     const leftMm = document.getElementById("leftMm");
     const rightMm = document.getElementById("rightMm");
     const measureArea = document.getElementById("measureArea");
+
     const tabs = document.querySelectorAll(".tab");
     const panelFinger = document.getElementById("panel-finger");
     const panelCircumference = document.getElementById("panel-circumference");
     const circumferenceInput = document.getElementById("circumferenceInput");
+
     const btnReset = document.getElementById("btnReset");
     const btnShowResult = document.getElementById("btnShowResult");
+
     const resultBox = document.getElementById("resultBox");
+    const resultReference = document.getElementById("resultReference");
+    const resultDiameter = document.getElementById("resultDiameter");
+    const resultCircumference = document.getElementById("resultCircumference");
+    const resultUS = document.getElementById("resultUS");
+    const resultVN = document.getElementById("resultVN");
+
+    function getUSSize(diameter) {
+      const sizes = [
+        { us: "3", mm: 14.1 },
+        { us: "3.5", mm: 14.5 },
+        { us: "4", mm: 14.9 },
+        { us: "4.5", mm: 15.3 },
+        { us: "5", mm: 15.7 },
+        { us: "5.5", mm: 16.1 },
+        { us: "6", mm: 16.5 },
+        { us: "6.5", mm: 16.9 },
+        { us: "7", mm: 17.3 },
+        { us: "7.5", mm: 17.7 },
+        { us: "8", mm: 18.1 },
+        { us: "8.5", mm: 18.5 },
+        { us: "9", mm: 18.9 },
+        { us: "9.5", mm: 19.4 },
+        { us: "10", mm: 19.8 },
+        { us: "10.5", mm: 20.2 },
+        { us: "11", mm: 20.6 },
+        { us: "11.5", mm: 21.0 },
+        { us: "12", mm: 21.4 }
+      ];
+
+      let closest = sizes[0];
+      let minDiff = Math.abs(diameter - closest.mm);
+
+      for (const item of sizes) {
+        const diff = Math.abs(diameter - item.mm);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = item;
+        }
+      }
+      return closest.us;
+    }
+
+    function getVNSize(diameter) {
+      return Math.max(1, Math.round((diameter - 10) * 2.5));
+    }
+
+    function setupCalibrationRange() {
+      const boxHeight = calBox.clientHeight;
+      const usableMax = Math.max(120, Math.floor(boxHeight - 8));
+      state.calMaxPx = usableMax;
+
+      calSlider.max = usableMax;
+      if (parseFloat(calSlider.value) > usableMax) {
+        calSlider.value = usableMax;
+      }
+
+      calInfo.textContent =
+        "Chiều cao tối đa khả dụng của khung mẫu trên máy này: " +
+        usableMax + " px";
+    }
 
     function updateCalibrateUI() {
       const pxHeight = parseFloat(calSlider.value);
       calObject.style.height = pxHeight + "px";
-      calTargetText.textContent = state.referenceMM ? state.referenceMM + " mm" : "-- mm";
+
+      if (state.referenceMM > 0) {
+        calTargetText.textContent = state.referenceMM.toFixed(2) + " mm";
+      } else {
+        calTargetText.textContent = "-- mm";
+      }
+
+      if (state.referenceMM > 0) {
+        const isAtMax = pxHeight >= state.calMaxPx - 1;
+        if (isAtMax) {
+          calSizeWarning.classList.remove("hidden");
+        } else {
+          calSizeWarning.classList.add("hidden");
+        }
+      } else {
+        calSizeWarning.classList.add("hidden");
+      }
     }
 
     function updateFingerUI() {
@@ -199,10 +640,38 @@
       fingerMmText.textContent = diameterMM.toFixed(2) + " mm";
       leftMm.textContent = diameterMM.toFixed(2) + " mm";
       rightMm.textContent = diameterMM.toFixed(2) + " mm";
+
       if (state.mmPerPx > 0) {
         const gapPx = diameterMM / state.mmPerPx;
         measureArea.style.setProperty("--gap", gapPx + "px");
       }
+    }
+
+    function resetAll() {
+      state.referenceMM = 0;
+      state.referenceName = "";
+      state.mmPerPx = 0;
+      state.currentTab = "finger";
+
+      optionEls.forEach(el => el.classList.remove("active"));
+      setupCalibrationRange();
+      calSlider.value = Math.min(200, state.calMaxPx);
+      fingerSlider.value = 14.5;
+      circumferenceInput.value = "";
+      resultBox.classList.add("hidden");
+      calWarning.classList.add("hidden");
+      calSizeWarning.classList.add("hidden");
+
+      tabs.forEach(tab => tab.classList.remove("active"));
+      document.querySelector('[data-tab="finger"]').classList.add("active");
+      panelFinger.classList.add("active");
+      panelCircumference.classList.remove("active");
+
+      step1.classList.remove("hidden");
+      step2.classList.add("hidden");
+
+      updateCalibrateUI();
+      updateFingerUI();
     }
 
     optionEls.forEach(el => {
@@ -220,10 +689,20 @@
     fingerSlider.addEventListener("input", updateFingerUI);
 
     btnConfirmCalibrate.addEventListener("click", () => {
-      if (!state.referenceMM) { calWarning.classList.remove("hidden"); return; }
-      state.mmPerPx = state.referenceMM / parseFloat(calSlider.value);
+      if (!state.referenceMM) {
+        calWarning.classList.remove("hidden");
+        return;
+      }
+
+      const pxHeight = parseFloat(calSlider.value);
+      if (!pxHeight || pxHeight <= 0) return;
+
+      state.mmPerPx = state.referenceMM / pxHeight;
+
       step1.classList.add("hidden");
       step2.classList.remove("hidden");
+      resultBox.classList.add("hidden");
+
       updateFingerUI();
     });
 
@@ -231,24 +710,68 @@
       tab.addEventListener("click", () => {
         tabs.forEach(item => item.classList.remove("active"));
         tab.classList.add("active");
+
         state.currentTab = tab.dataset.tab;
-        panelFinger.classList.toggle("active", state.currentTab === "finger");
-        panelCircumference.classList.toggle("active", state.currentTab === "circumference");
+
+        if (state.currentTab === "finger") {
+          panelFinger.classList.add("active");
+          panelCircumference.classList.remove("active");
+        } else {
+          panelFinger.classList.remove("active");
+          panelCircumference.classList.add("active");
+        }
+
+        resultBox.classList.add("hidden");
       });
     });
 
     btnShowResult.addEventListener("click", () => {
-      let dia = state.currentTab === "finger" ? parseFloat(fingerSlider.value) : parseFloat(circumferenceInput.value)/Math.PI;
-      if (isNaN(dia)) return alert("Nhập dữ liệu!");
-      document.getElementById("resultReference").textContent = state.referenceName;
-      document.getElementById("resultDiameter").textContent = dia.toFixed(2) + " mm";
-      document.getElementById("resultCircumference").textContent = (dia * Math.PI).toFixed(2) + " mm";
-      document.getElementById("resultVN").textContent = Math.round((dia - 10) * 2.5 + 1);
+      if (!state.mmPerPx) {
+        resetAll();
+        return;
+      }
+
+      let diameter = 0;
+      let circumference = 0;
+
+      if (state.currentTab === "finger") {
+        diameter = parseFloat(fingerSlider.value);
+        circumference = Math.PI * diameter;
+      } else {
+        circumference = parseFloat(circumferenceInput.value);
+
+        if (!circumference || circumference <= 0) {
+          alert("Vui lòng nhập chu vi hợp lệ, đơn vị mm.");
+          return;
+        }
+
+        diameter = circumference / Math.PI;
+      }
+
+      const us = getUSSize(diameter);
+      const vn = getVNSize(diameter);
+
+      resultReference.textContent = state.referenceName;
+      resultDiameter.textContent = diameter.toFixed(2) + " mm";
+      resultCircumference.textContent = circumference.toFixed(2) + " mm";
+      resultUS.textContent = us;
+      resultVN.textContent = vn;
+
       resultBox.classList.remove("hidden");
+      resultBox.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
-    btnReset.addEventListener("click", () => location.reload());
+    btnReset.addEventListener("click", resetAll);
+
+    window.addEventListener("resize", () => {
+      setupCalibrationRange();
+      updateCalibrateUI();
+    });
+
+    setupCalibrationRange();
+    calSlider.value = Math.min(200, state.calMaxPx);
     updateCalibrateUI();
+    updateFingerUI();
   </script>
 </body>
 </html>
