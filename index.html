@@ -101,7 +101,7 @@
 
     .cal-box {
       margin-top: 14px;
-      height: 270px;
+      height: 420px;
       border: 1px solid #dcdcdc;
       border-radius: 16px;
       position: relative;
@@ -119,7 +119,8 @@
       top: 50%;
       transform: translate(-50%, -50%);
       width: 70px;
-      height: 120px;
+      height: 180px;
+      max-height: calc(100% - 24px);
       border: 3px solid #0b57d0;
       border-radius: 12px;
       background: rgba(11,87,208,.08);
@@ -345,7 +346,7 @@
       <h1>Đo size nhẫn</h1>
       <p>
         Mỗi lần mở web cần calibrate lại. Khung mẫu được căn theo
-        <strong>chiều dọc</strong>, nhưng dùng đúng số chuẩn bạn yêu cầu:
+        <strong>chiều dọc</strong>, dùng đúng số bạn yêu cầu:
         <strong>CCCD = 53.98 mm</strong>,
         <strong>20.000đ = 65 mm</strong>.
       </p>
@@ -363,29 +364,29 @@
       <div class="option-list">
         <div class="option" data-mm="53.98" data-name="CCCD">
           <div class="option-title">CCCD</div>
-          <div class="option-sub">Dùng giá trị chuẩn: 53.98 mm</div>
+          <div class="option-sub">Giá trị chuẩn dùng để căn: 53.98 mm</div>
         </div>
 
         <div class="option" data-mm="65" data-name="Tờ 20.000đ">
           <div class="option-title">Tờ 20.000đ</div>
-          <div class="option-sub">Dùng giá trị chuẩn: 65 mm</div>
+          <div class="option-sub">Giá trị chuẩn dùng để căn: 65 mm</div>
         </div>
       </div>
 
       <div class="cal-box">
         <div class="cal-object" id="calObject"></div>
         <div class="cal-text">
-          Đặt vật thật theo phương bạn muốn căn trên màn hình<br />
+          Đặt vật thật lên màn hình<br />
           rồi kéo cho khớp <strong>chiều dọc</strong> của khung mẫu
         </div>
       </div>
 
       <div class="slider-wrap">
         <div class="slider-head">
-          <strong>Chiều dọc đang căn</strong>
-          <span id="calMmText">-- mm</span>
+          <strong>Mục tiêu cần căn</strong>
+          <span id="calTargetText">-- mm</span>
         </div>
-        <input type="range" id="calSlider" min="60" max="220" value="120" />
+        <input type="range" id="calSlider" min="80" max="380" value="180" />
       </div>
 
       <div class="warning hidden" id="calWarning">
@@ -508,7 +509,7 @@
     const optionEls = document.querySelectorAll(".option");
     const calObject = document.getElementById("calObject");
     const calSlider = document.getElementById("calSlider");
-    const calMmText = document.getElementById("calMmText");
+    const calTargetText = document.getElementById("calTargetText");
     const calWarning = document.getElementById("calWarning");
     const btnConfirmCalibrate = document.getElementById("btnConfirmCalibrate");
 
@@ -569,6 +570,7 @@
           closest = item;
         }
       }
+
       return closest.us;
     }
 
@@ -581,9 +583,9 @@
       calObject.style.height = pxHeight + "px";
 
       if (state.referenceMM > 0) {
-        calMmText.textContent = state.referenceMM.toFixed(2) + " mm";
+        calTargetText.textContent = state.referenceMM.toFixed(2) + " mm";
       } else {
-        calMmText.textContent = "-- mm";
+        calTargetText.textContent = "-- mm";
       }
     }
 
@@ -606,7 +608,7 @@
       state.currentTab = "finger";
 
       optionEls.forEach(el => el.classList.remove("active"));
-      calSlider.value = 120;
+      calSlider.value = 180;
       fingerSlider.value = 14.5;
       circumferenceInput.value = "";
       resultBox.classList.add("hidden");
