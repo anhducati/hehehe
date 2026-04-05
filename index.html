@@ -133,18 +133,9 @@
       max-height: calc(100% - 8px);
     }
 
-    .cal-text {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      text-align: center;
-      padding: 20px;
-      color: #444;
-      font-size: 14px;
-      line-height: 1.55;
+    .cal-text,
+    .center-label {
+      display: none !important;
     }
 
     .slider-wrap {
@@ -275,23 +266,6 @@
     .measure-label.left { left: 8px; }
     .measure-label.right { right: 8px; }
 
-    .center-label {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      background: rgba(255,255,255,.95);
-      border: 1px solid #e5e5e5;
-      border-radius: 12px;
-      padding: 10px 14px;
-      width: calc(100% - 80px);
-      max-width: 270px;
-      font-size: 15px;
-      line-height: 1.45;
-      color: #333;
-    }
-
     .btn-row {
       display: flex;
       gap: 10px;
@@ -386,10 +360,6 @@
 
       <div class="cal-box" id="calBox">
         <div class="cal-object" id="calObject"></div>
-        <div class="cal-text">
-          Đặt vật thật lên màn hình<br />
-          rồi kéo cho khớp <strong>chiều dọc</strong> của khung mẫu
-        </div>
       </div>
 
       <div class="slider-wrap">
@@ -438,11 +408,6 @@
 
           <div class="measure-label left" id="leftMm">14.50 mm</div>
           <div class="measure-label right" id="rightMm">14.50 mm</div>
-
-          <div class="center-label">
-            Đặt phần to nhất của ngón tay vào giữa<br />
-            rồi kéo cho 2 vạch xanh vừa chạm mép ngón
-          </div>
         </div>
 
         <div class="slider-wrap">
