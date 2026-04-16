@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Dashboard PRO GPS thật</title>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://tile.openstreetmap.org">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+:root{--bg:#071018;--panel:#101925;--panel2:#0d1722;--text:#eef8ff;--muted:#98aec3;--accent:#35b6ff;--accent2:#87dcff;--ok:#47d57d;--amber:#ffc857;--danger:#ff6e6e;--grid:rgba(255,255,255,.08)}
+body.day{--bg:#e5eef7;--panel:#eef4fa;--panel2:#dde9f4;--text:#102231;--muted:#607b90;--accent:#0b84ff;--accent2:#5cb7ff;--ok:#1ca154;--amber:#c98600;--danger:#df5b5b;--grid:rgba(0,0,0,.08)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;color:var(--text);background:linear-gradient(180deg,var(--bg),#132131 180%);min-height:100vh}
+body.day{background:linear-gradient(180deg,#edf3f9,#dbe7f2 180%)}
+.wrap{max-width:1380px;margin:0 auto;padding:16px;display:grid;grid-template-columns:390px 1fr;gap:16px}
+.panel{background:var(--panel);border:1px solid rgba(127,127,127,.15);border-radius:22px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.title{margin:0 0 8px;font-size:24px;font-weight:900}.sub{margin:0 0 14px;color:var(--muted);line-height:1.45}
+.group{margin-bottom:14px}label{display:block;font-size:14px;font-weight:800;margin-bottom:8px}
+input[type="text"],input[type="number"],select{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(127,127,127,.22);background:var(--panel2);color:var(--text);outline:none;font-size:14px}
+input[type="range"]{width:100%}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.checks{display:grid;gap:8px}
+.check{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--panel2);border-radius:12px}
+button{border:none;width:100%;padding:12px 14px;border-radius:12px;background:var(--accent);color:white;font-weight:900;cursor:pointer}
+.secondary{background:var(--panel2);color:var(--text);border:1px solid rgba(127,127,127,.18)}
+.status{padding:12px 14px;border-radius:12px;background:var(--panel2);color:var(--muted);line-height:1.4;font-size:13px;white-space:pre-wrap}
+.right{display:flex;flex-direction:column;gap:14px;align-items:center}.badgebar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.badge{background:var(--panel);border:1px solid rgba(127,127,127,.15);border-radius:999px;padding:8px 12px;font-size:13px;font-weight:800}
+.device{background:#080808;padding:18px;border-radius:32px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.05),0 24px 60px rgba(0,0,0,.42);width:100%}
+.screen{width:100%;aspect-ratio:800/480;border-radius:18px;overflow:hidden;position:relative;background:#050a10}
+#map{position:absolute;inset:0;z-index:1}#overlay{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:block;pointer-events:none}
+.hint{width:100%;background:var(--panel);border-radius:16px;padding:12px 16px;color:var(--muted);border:1px solid rgba(127,127,127,.15)}.small{font-size:12px;color:var(--muted);line-height:1.45}
+@media (max-width:980px){.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <h1 class="title">Dashboard PRO GPS thật</h1>
+    <p class="sub">Bản này lấy vị trí thật từ điện thoại, hiện tốc độ realtime, có touring/race, map thật, auto gear và shift light.</p>
+
+    <div class="group"><label>Kiểu dashboard</label>
+      <select id="mode"><option value="touring">Touring full map</option><option value="race">Sport race</option></select>
+    </div>
+
+    <div class="group"><div class="row">
+      <button id="startGps" type="button">Bắt đầu GPS thật</button>
+      <button id="stopGps" class="secondary" type="button">Dừng GPS</button>
+    </div></div>
+
+    <div class="group"><div class="row">
+      <button id="dayBtn" class="secondary" type="button">Day mode</button>
+      <button id="nightBtn" class="secondary" type="button">Night mode</button>
+    </div></div>
+
+    <div class="group"><label>Bản đồ</label>
+      <select id="mapStyle"><option value="osm">OpenStreetMap (mặc định)</option><option value="sat">Esri Satellite</option></select>
+    </div>
+
+    <div class="group"><label>Tốc độ giả lập khi GPS đứng yên (km/h)</label>
+      <input id="manualSpeed" type="range" min="0" max="299" value="0">
+      <input id="manualSpeedNum" type="number" min="0" max="299" value="0">
+    </div>
+
+    <div class="group"><label>RPM giả lập</label>
+      <input id="rpm" type="range" min="0" max="16000" step="100" value="4200">
+      <input id="rpmNum" type="number" min="0" max="16000" step="100" value="4200">
+    </div>
+
+    <div class="group"><div class="row">
+      <div><label>Điện áp bình</label><input id="volt" type="number" min="10" max="16" step="0.1" value="13.1"></div>
+      <div><label>Nhiệt độ</label><input id="temp" type="number" min="-10" max="60" value="31"></div>
+    </div></div>
+
+    <div class="group"><div class="row">
+      <div><label>ODO (km)</label><input id="odo" type="number" min="0" value="12580"></div>
+      <div><label>ETA (phút)</label><input id="eta" type="number" min="0" value="18"></div>
+    </div></div>
+
+    <div class="group"><label>Điểm đến</label><input id="dest" type="text" value="Đi thử ngoài đường • 6.8 km"></div>
+
+    <div class="group"><div class="checks">
+      <label class="check"><input id="followMap" type="checkbox" checked> Tự bám theo vị trí trên map</label>
+      <label class="check"><input id="showGrid" type="checkbox"> Hiện lưới căn chỉnh</label>
+      <label class="check"><input id="showIcons" type="checkbox" checked> Hiện icon cảnh báo mẫu</label>
+      <label class="check"><input id="autoShift" type="checkbox" checked> Gear tự đổi theo tốc độ</label>
+      <label class="check"><input id="useGpsSpeed" type="checkbox" checked> Ưu tiên tốc độ GPS thật</label>
+    </div></div>
+
+    <div class="group"><div class="status" id="status">Chưa khởi động GPS.</div></div>
+    <div class="group small">Mẹo test thật: mở file bằng Chrome/Safari trên điện thoại, bấm <b>Bắt đầu GPS thật</b>, cho phép quyền vị trí, rồi đi ra ngoài trời hoặc ngồi trên xe chạy chậm để xem tốc độ và bản đồ cập nhật.</div>
+  </div>
+
+  <div class="right">
+    <div class="badgebar">
+      <div class="badge">GPS thật từ điện thoại</div>
+      <div class="badge">Tốc độ realtime</div>
+      <div class="badge">Map thật</div>
+      <div class="badge">Touring / Race</div>
+    </div>
+    <div class="device"><div class="screen"><div id="map"></div><canvas id="overlay" width="800" height="480"></canvas></div></div>
+    <div class="hint">Nếu điện thoại không trả về <b>speed</b> trực tiếp, file sẽ tự ước tính từ chênh lệch vị trí theo thời gian. RPM vẫn là giả lập để bạn test <b>shift light</b> và giao diện race.</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const els={mode:mode,startGps:startGps,stopGps:stopGps,dayBtn:dayBtn,nightBtn:nightBtn,mapStyle:mapStyle,manualSpeed:manualSpeed,manualSpeedNum:manualSpeedNum,rpm:rpm,rpmNum:rpmNum,volt:volt,temp:temp,odo:odo,eta:eta,dest:dest,followMap:followMap,showGrid:showGrid,showIcons:showIcons,autoShift:autoShift,useGpsSpeed:useGpsSpeed,status:status};
+const canvas=document.getElementById('overlay'),ctx=canvas.getContext('2d');
+let watchId=null;
+let gpsState={lat:21.028511,lng:105.804817,speedKmh:0,heading:0,accuracy:null,sats:0,lastTimestamp:null,lastLat:null,lastLng:null,locationOk:false};
+
+function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
+function syncRange(a,b,max){a.addEventListener('input',()=>{b.value=clamp(+a.value||0,0,max);draw()});b.addEventListener('input',()=>{a.value=clamp(+b.value||0,0,max);b.value=a.value;draw()})}
+syncRange(els.manualSpeed,els.manualSpeedNum,299); syncRange(els.rpm,els.rpmNum,16000);
+['mode','mapStyle','volt','temp','odo','eta','dest','followMap','showGrid','showIcons','autoShift','useGpsSpeed'].forEach(id=>{els[id].addEventListener('input',()=>{if(id==='mapStyle')switchBaseLayer();draw()});els[id].addEventListener('change',()=>{if(id==='mapStyle')switchBaseLayer();draw()})});
+els.dayBtn.onclick=()=>{document.body.classList.add('day');draw()}; els.nightBtn.onclick=()=>{document.body.classList.remove('day');draw()};
+
+function palette(){if(document.body.classList.contains('day')) return {text:'#102231',sub:'#607b90',panel:'rgba(238,244,250,.85)',panel2:'rgba(221,233,244,.88)',accent:'#0b84ff',accent2:'#5cb7ff',ok:'#1ca154',amber:'#c98600',danger:'#df5b5b',grid:'rgba(0,0,0,.08)'}; return {text:'#eef8ff',sub:'#98aec3',panel:'rgba(16,25,37,.78)',panel2:'rgba(13,23,34,.86)',accent:'#35b6ff',accent2:'#87dcff',ok:'#47d57d',amber:'#ffc857',danger:'#ff6e6e',grid:'rgba(255,255,255,.08)'}}
+
+const map=L.map('map',{zoomControl:false,attributionControl:true}).setView([gpsState.lat,gpsState.lng],15);
+const layers={
+  osm:L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}),
+  sat:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles &copy; Esri'})
+};
+let currentLayer=layers.osm.addTo(map);
+const marker=L.circleMarker([gpsState.lat,gpsState.lng],{radius:8,color:'#35b6ff',weight:3,fillColor:'#87dcff',fillOpacity:1}).addTo(map);
+const accuracyCircle=L.circle([gpsState.lat,gpsState.lng],{radius:0,color:'#35b6ff',weight:1,fillColor:'#35b6ff',fillOpacity:0.08}).addTo(map);
+const routeLine=L.polyline([], {color:'#35b6ff',weight:6,opacity:0.8}).addTo(map);
+const track=[];
+
+function switchBaseLayer(){if(currentLayer) map.removeLayer(currentLayer); currentLayer=layers[els.mapStyle.value]||layers.osm; currentLayer.addTo(map)}
+function haversineKm(lat1,lon1,lat2,lon2){const R=6371,toRad=d=>d*Math.PI/180,dLat=toRad(lat2-lat1),dLon=toRad(lon2-lon1); const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2; return 2*R*Math.asin(Math.sqrt(a))}
+function getEffectiveSpeed(){const gps=gpsState.speedKmh||0, manual=+els.manualSpeed.value||0; if(els.useGpsSpeed.checked&&gpsState.locationOk) return gps>0.5?gps:manual; return manual}
+function getEffectiveRpm(speed){const base=+els.rpm.value||0; if(els.mode.value!=='race') return base; const auto=1800+speed*55+Math.sin(Date.now()/240)*280; return clamp(Math.max(base,auto),0,16000)}
+function getAutoGear(speed){let gear=1; if(speed>25)gear=2; if(speed>50)gear=3; if(speed>85)gear=4; if(speed>125)gear=5; if(speed>170)gear=6; return gear}
+function updateStatus(extra=''){const speed=getEffectiveSpeed().toFixed(1); const acc=gpsState.accuracy?Math.round(gpsState.accuracy)+' m':'--'; els.status.textContent=`GPS: ${gpsState.locationOk?'đang chạy':'chưa có vị trí'}
+Lat/Lng: ${gpsState.lat.toFixed(6)}, ${gpsState.lng.toFixed(6)}
+Tốc độ: ${speed} km/h
+Heading: ${Math.round(gpsState.heading||0)}°
+Accuracy: ${acc}
+${extra}`.trim()}
+
+function startGps(){
+  if(!navigator.geolocation){updateStatus('Thiết bị / trình duyệt này không hỗ trợ Geolocation.'); return}
+  if(watchId!==null) navigator.geolocation.clearWatch(watchId);
+  updateStatus('Đang xin quyền vị trí...');
+  watchId=navigator.geolocation.watchPosition(pos=>{
+    const {latitude,longitude,speed,heading,accuracy}=pos.coords; const ts=pos.timestamp||Date.now();
+    let computed=0;
+    if(typeof speed==='number'&&!Number.isNaN(speed)) computed=speed*3.6;
+    else if(gpsState.lastLat!==null&&gpsState.lastTimestamp!==null){const km=haversineKm(gpsState.lastLat,gpsState.lastLng,latitude,longitude); const hours=(ts-gpsState.lastTimestamp)/3600000; if(hours>0) computed=km/hours}
+    gpsState.lat=latitude; gpsState.lng=longitude; gpsState.speedKmh=clamp(computed,0,299); gpsState.heading=(typeof heading==='number'&&!Number.isNaN(heading))?heading:gpsState.heading; gpsState.accuracy=accuracy; gpsState.lastTimestamp=ts; gpsState.lastLat=latitude; gpsState.lastLng=longitude; gpsState.locationOk=true; gpsState.sats=accuracy?Math.max(4,Math.min(14,Math.round(15-accuracy/10))):9;
+    marker.setLatLng([latitude,longitude]); accuracyCircle.setLatLng([latitude,longitude]).setRadius(accuracy||0); track.push([latitude,longitude]); if(track.length>120) track.shift(); routeLine.setLatLngs(track); if(els.followMap.checked) map.setView([latitude,longitude],Math.max(map.getZoom(),16),{animate:true});
+    updateStatus(); draw();
+  },err=>{const msg={1:'Bạn đã từ chối quyền vị trí.',2:'Không lấy được vị trí hiện tại.',3:'Hết thời gian chờ lấy GPS.'}[err.code]||('Lỗi GPS: '+err.message); updateStatus(msg)},{enableHighAccuracy:true,maximumAge:1000,timeout:15000})
+}
+function stopGps(){if(watchId!==null){navigator.geolocation.clearWatch(watchId); watchId=null} updateStatus('Đã dừng GPS.')}
+els.startGps.onclick=startGps; els.stopGps.onclick=stopGps;
+
+function rr(x,y,w,h,r,fill=true){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r); if(fill)ctx.fill()}
+function line(x1,y1,x2,y2,w,color){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineWidth=w;ctx.strokeStyle=color;ctx.stroke()}
+function drawTopIcons(c){if(!els.showIcons.checked) return; const arr=[{x:24,label:'N',bg:c.ok},{x:70,label:'ABS',bg:c.amber},{x:122,label:'GPS',bg:gpsState.locationOk?c.accent:c.danger}]; arr.forEach(it=>{ctx.fillStyle=it.bg; rr(it.x,18,it.label==='ABS'?42:38,20,8,true); ctx.fillStyle='#091018'; ctx.font='bold 12px Arial'; ctx.textAlign='center'; ctx.fillText(it.label,it.x+(it.label==='ABS'?21:19),32)})}
+function drawClock(c){const d=new Date(),hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0'); ctx.fillStyle=c.text; ctx.font='bold 24px Arial'; ctx.textAlign='right'; ctx.fillText(hh+':'+mm,776,34); ctx.fillStyle=c.sub; ctx.font='12px Arial'; ctx.fillText(els.mode.value==='touring'?'TOURING MAP':'SPORT RACE',776,52)}
+function drawGpsRow(c){ctx.fillStyle=c.panel; rr(18,448,764,20,10,true); ctx.fillStyle=c.sub; ctx.font='11px Arial'; ctx.textAlign='left'; ctx.fillText(`LAT ${gpsState.lat.toFixed(6)} • LNG ${gpsState.lng.toFixed(6)} • ACC ${gpsState.accuracy?Math.round(gpsState.accuracy)+'m':'--'}`,30,462)}
+function drawTouring(c,speed){
+  ctx.fillStyle=c.panel; rr(506,52,276,350,22,true);
+  ctx.fillStyle=c.panel2; rr(526,72,236,128,20,true); ctx.fillStyle=c.text; ctx.font='900 90px Arial'; ctx.textAlign='center'; ctx.fillText(String(Math.round(speed)),644,150); ctx.fillStyle=c.sub; ctx.font='bold 20px Arial'; ctx.fillText('km/h',644,178);
+  ctx.fillStyle=c.panel2; rr(526,214,236,82,16,true); ctx.fillStyle=c.sub; ctx.font='bold 14px Arial'; ctx.textAlign='left'; ctx.fillText('Điểm đến',544,240); ctx.fillStyle=c.text; ctx.font='bold 20px Arial'; ctx.fillText((els.dest.value||'--').slice(0,24),544,270); ctx.textAlign='right'; ctx.fillStyle=c.accent; ctx.fillText((els.eta.value||0)+' min',744,270);
+  const stats=[['GPS',(gpsState.sats||0)+' sat',(gpsState.sats||0)>=8?c.ok:c.amber],['BATT',Number(els.volt.value||0).toFixed(1)+'V',Number(els.volt.value||0)<12?c.danger:c.ok],['TEMP',(els.temp.value||0)+'°C',c.text],['ODO',(els.odo.value||0)+' km',c.text]];
+  for(let i=0;i<4;i++){const x=526+(i%2)*120,y=312+Math.floor(i/2)*54; ctx.fillStyle=c.panel2; rr(x,y,114,46,14,true); ctx.fillStyle=c.sub; ctx.font='bold 12px Arial'; ctx.textAlign='left'; ctx.fillText(stats[i][0],x+12,y+18); ctx.textAlign='right'; ctx.fillStyle=stats[i][2]; ctx.font='bold 16px Arial'; ctx.fillText(stats[i][1],x+100,y+31)}
+  ctx.save(); ctx.translate(452,78); ctx.rotate((gpsState.heading||0)*Math.PI/180); ctx.fillStyle=c.accent; ctx.beginPath(); ctx.moveTo(0,-16); ctx.lineTo(10,12); ctx.lineTo(0,7); ctx.lineTo(-10,12); ctx.closePath(); ctx.shadowColor=c.accent; ctx.shadowBlur=12; ctx.fill(); ctx.restore();
+}
+function drawShiftLights(c,rpm){const startX=180,y=54,w=34,gap=8,ths=[7000,8000,9000,10000,11000,12000,13000,14000]; ths.forEach((th,i)=>{let color=c.panel2; if(rpm>=th){if(i<4)color=c.ok; else if(i<6)color=c.amber; else color=c.danger} ctx.fillStyle=color; rr(startX+i*(w+gap),y,w,16,6,true)})}
+function drawRace(c,speed,rpm,gear){
+  drawShiftLights(c,rpm);
+  ctx.fillStyle=c.panel; rr(18,84,310,286,22,true); ctx.fillStyle=c.text; ctx.font='900 110px Arial'; ctx.textAlign='center'; ctx.fillText(String(Math.round(speed)),173,220); ctx.fillStyle=c.sub; ctx.font='bold 20px Arial'; ctx.fillText('km/h',173,255);
+  ctx.fillStyle=c.panel; rr(346,84,150,286,22,true); ctx.fillStyle=c.panel2; rr(370,110,102,150,22,true); ctx.fillStyle=c.text; ctx.font='900 120px Arial'; ctx.textAlign='center'; ctx.fillText(String(gear),421,215); ctx.fillStyle=c.sub; ctx.font='bold 18px Arial'; ctx.fillText('GEAR',421,248);
+  ctx.fillStyle=c.panel; rr(514,84,268,286,22,true);
+  const cx=648,cy=238,r=118,start=Math.PI*0.78,end=Math.PI*2.22; ctx.lineCap='round'; ctx.beginPath(); ctx.strokeStyle=c.panel2; ctx.lineWidth=18; ctx.arc(cx,cy,r,start,end); ctx.stroke();
+  for(let i=0;i<=16;i++){const a=start+(end-start)*(i/16),tickColor=i<12?c.sub:c.danger; line(cx+Math.cos(a)*(r-20),cy+Math.sin(a)*(r-20),cx+Math.cos(a)*(r+4),cy+Math.sin(a)*(r+4),3,tickColor); ctx.fillStyle=tickColor; ctx.font='bold 12px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(i),cx+Math.cos(a)*(r-42),cy+Math.sin(a)*(r-42))}
+  const ang=start+(end-start)*(rpm/16000),grad=ctx.createLinearGradient(540,110,760,330); grad.addColorStop(0,c.ok); grad.addColorStop(.65,c.accent); grad.addColorStop(1,c.danger); ctx.beginPath(); ctx.strokeStyle=grad; ctx.lineWidth=18; ctx.arc(cx,cy,r,start,ang); ctx.stroke();
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(-8,0); ctx.lineTo(0,-7); ctx.lineTo(r-14,0); ctx.lineTo(0,7); ctx.closePath(); const hot=rpm>=12000; ctx.fillStyle=hot?c.danger:c.accent; ctx.shadowColor=hot?c.danger:c.accent; ctx.shadowBlur=16; ctx.fill(); ctx.restore();
+  ctx.fillStyle=c.text; ctx.beginPath(); ctx.arc(cx,cy,12,0,Math.PI*2); ctx.fill(); ctx.fillStyle=rpm>=12000?c.danger:c.accent; ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=c.text; ctx.font='bold 26px Arial'; ctx.textAlign='center'; ctx.fillText((rpm/1000).toFixed(1)+' x1000 rpm',cx,325);
+  const info=[['GPS',(gpsState.sats||0)+' sat',(gpsState.sats||0)>=8?c.ok:c.amber],['BATT',Number(els.volt.value||0).toFixed(1)+'V',Number(els.volt.value||0)<12?c.danger:c.ok],['TEMP',(els.temp.value||0)+'°C',c.text],['ODO',(els.odo.value||0)+' km',c.text]];
+  for(let i=0;i<4;i++){const x=18+i*192; ctx.fillStyle=c.panel; rr(x,390,178,52,16,true); ctx.fillStyle=c.sub; ctx.font='bold 13px Arial'; ctx.textAlign='left'; ctx.fillText(info[i][0],x+14,411); ctx.textAlign='right'; ctx.fillStyle=info[i][2]; ctx.font='bold 18px Arial'; ctx.fillText(info[i][1],x+164,426)}
+}
+function drawGrid(c){if(!els.showGrid.checked) return; for(let x=0;x<=800;x+=40) line(x,0,x,480,1,c.grid); for(let y=0;y<=480;y+=40) line(0,y,800,y,1,c.grid)}
+function draw(){const c=palette(),speed=getEffectiveSpeed(),rpm=getEffectiveRpm(speed),gear=els.autoShift.checked?getAutoGear(speed):1; ctx.clearRect(0,0,800,480); drawTopIcons(c); drawClock(c); if(els.mode.value==='touring') drawTouring(c,speed); else drawRace(c,speed,rpm,gear); drawGpsRow(c); drawGrid(c)}
+function tick(){if(els.mode.value==='race'&&els.autoShift.checked&&!els.useGpsSpeed.checked){const speed=getEffectiveSpeed(),target=clamp(2200+speed*55+Math.sin(Date.now()/220)*300,1200,15500); els.rpm.value=Math.round(target/100)*100; els.rpmNum.value=els.rpm.value} draw(); requestAnimationFrame(tick)}
+updateStatus(); draw(); tick();
+</script>
+</body></html>
