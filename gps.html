@@ -1,4 +1,4 @@
-html = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8" />
@@ -36,6 +36,7 @@ html,body{margin:0;width:100%;height:100%;font-family:Inter,Arial,sans-serif;bac
   backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.08); font-size:13px; line-height:1.4;
 }
 .hidden{display:none}
+#map.race-hidden{display:none}
 </style>
 </head>
 <body>
@@ -54,7 +55,7 @@ html,body{margin:0;width:100%;height:100%;font-family:Inter,Arial,sans-serif;bac
     </div>
   </div>
 
-  <div id="toast">Bấm <b>Bật GPS</b> để lấy vị trí thật, tốc độ thật và nhiệt độ đúng tại nơi bạn đang đứng.</div>
+  <div id="toast">Bấm <b>Bật GPS</b> để lấy vị trí thật, tốc độ thật đã lọc chống rung khi đứng yên, và nhiệt độ đúng tại nơi bạn đang đứng.</div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -76,6 +77,8 @@ const state = {
   lat: 21.028511,
   lng: 105.804817,
   speedKmh: 0,
+  rawSpeedKmh: 0,
+  speedSamples: [],
   heading: 0,
   accuracy: null,
   locationOk: false,
@@ -107,6 +110,42 @@ function haversineKm(lat1, lon1, lat2, lon2){
   const dLon = toRad(lon2 - lon1);
   const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
   return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function getSpeedThresholdByAccuracy(acc){
+  if(acc == null) return 3.5;
+  if(acc <= 8) return 1.8;
+  if(acc <= 15) return 3.0;
+  if(acc <= 25) return 4.5;
+  return 6.0;
+}
+
+function smoothSpeed(newSpeed, acc){
+  const threshold = getSpeedThresholdByAccuracy(acc);
+
+  // đứng yên hoặc GPS chưa ổn thì ép về 0
+  if(!Number.isFinite(newSpeed) || newSpeed < threshold){
+    state.speedSamples.push(0);
+  }else{
+    state.speedSamples.push(newSpeed);
+  }
+
+  if(state.speedSamples.length > 6) state.speedSamples.shift();
+
+  const avg = state.speedSamples.reduce((a,b)=>a+b,0) / state.speedSamples.length;
+
+  // thêm một lớp chặn rung rất nhỏ
+  if(avg < threshold * 0.9) return 0;
+
+  return avg;
+}
+
+function applyModeLayout(){
+  if(mode === 'race'){
+    document.getElementById('map').classList.add('race-hidden');
+  }else{
+    document.getElementById('map').classList.remove('race-hidden');
+  }
 }
 
 async function fetchCurrentTemperature(lat, lng){
@@ -174,7 +213,8 @@ function startGps(){
 
     state.lat = latitude;
     state.lng = longitude;
-    state.speedKmh = clamp(computed, 0, 299);
+    state.rawSpeedKmh = clamp(computed, 0, 299);
+    state.speedKmh = clamp(smoothSpeed(state.rawSpeedKmh, accuracy), 0, 299);
     state.heading = (typeof heading === 'number' && !Number.isNaN(heading)) ? heading : state.heading;
     state.accuracy = accuracy;
     state.locationOk = true;
@@ -216,6 +256,7 @@ gpsBtn.onclick = startGps;
 modeBtn.onclick = () => {
   mode = mode === 'touring' ? 'race' : 'touring';
   modeBtn.textContent = mode === 'touring' ? 'Touring' : 'Race';
+  applyModeLayout();
   draw();
 };
 themeBtn.onclick = () => {
@@ -356,60 +397,65 @@ function drawShiftLights(c){
 function drawRace(c){
   drawShiftLights(c);
 
+  // nền card full màn cho race
   ctx.fillStyle = c.panel;
-  rr(18,84,310,286,22,true);
-  ctx.fillStyle = c.text;
-  ctx.font = '900 110px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(String(Math.round(state.speedKmh)), 173, 220);
-  ctx.fillStyle = c.sub;
-  ctx.font = 'bold 20px Arial';
-  ctx.fillText('km/h', 173, 255);
+  rr(10,44,780,388,26,true);
 
-  ctx.fillStyle = c.panel;
-  rr(346,84,150,286,22,true);
+  // speed block trái
   ctx.fillStyle = c.panel2;
-  rr(370,110,102,150,22,true);
+  rr(24,76,250,260,22,true);
   ctx.fillStyle = c.text;
   ctx.font = '900 120px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText(String(state.gear), 421, 215);
+  ctx.fillText(String(Math.round(state.speedKmh)), 149, 210);
+  ctx.fillStyle = c.sub;
+  ctx.font = 'bold 22px Arial';
+  ctx.fillText('km/h', 149, 248);
+
+  // gear block giữa
+  ctx.fillStyle = c.panel2;
+  rr(290,76,150,260,22,true);
+  ctx.fillStyle = c.text;
+  ctx.font = '900 132px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(String(state.gear), 365, 205);
   ctx.fillStyle = c.sub;
   ctx.font = 'bold 18px Arial';
-  ctx.fillText('GEAR', 421, 248);
+  ctx.fillText('GEAR', 365, 245);
 
-  ctx.fillStyle = c.panel;
-  rr(514,84,268,286,22,true);
+  // tachometer block phải full lớn hơn
+  ctx.fillStyle = c.panel2;
+  rr(454,76,318,260,22,true);
 
-  const cx = 648, cy = 238, r = 118;
+  const cx = 613, cy = 214, r = 128;
   const start = Math.PI*0.78, end = Math.PI*2.22;
 
   ctx.beginPath();
-  ctx.strokeStyle = c.panel2;
-  ctx.lineWidth = 18;
+  ctx.strokeStyle = c.panel;
+  ctx.lineWidth = 20;
   ctx.arc(cx, cy, r, start, end);
   ctx.stroke();
 
   for(let i=0;i<=16;i++){
     const a = start + (end-start)*(i/16);
     const tickColor = i < 12 ? c.sub : c.danger;
-    line(cx+Math.cos(a)*(r-20), cy+Math.sin(a)*(r-20), cx+Math.cos(a)*(r+4), cy+Math.sin(a)*(r+4), 3, tickColor);
+    line(cx+Math.cos(a)*(r-22), cy+Math.sin(a)*(r-22), cx+Math.cos(a)*(r+6), cy+Math.sin(a)*(r+6), 3, tickColor);
     ctx.fillStyle = tickColor;
     ctx.font = 'bold 12px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(i), cx+Math.cos(a)*(r-42), cy+Math.sin(a)*(r-42));
+    ctx.fillText(String(i), cx+Math.cos(a)*(r-46), cy+Math.sin(a)*(r-46));
   }
 
   const ang = start + (end-start)*(state.rpm / 16000);
-  const grad = ctx.createLinearGradient(540,110,760,330);
+  const grad = ctx.createLinearGradient(500,90,760,300);
   grad.addColorStop(0, c.ok);
   grad.addColorStop(.65, c.accent);
   grad.addColorStop(1, c.danger);
 
   ctx.beginPath();
   ctx.strokeStyle = grad;
-  ctx.lineWidth = 18;
+  ctx.lineWidth = 20;
   ctx.arc(cx, cy, r, start, ang);
   ctx.stroke();
 
@@ -417,11 +463,11 @@ function drawRace(c){
   ctx.translate(cx, cy);
   ctx.rotate(ang);
   ctx.beginPath();
-  ctx.moveTo(-8,0); ctx.lineTo(0,-7); ctx.lineTo(r-14,0); ctx.lineTo(0,7); ctx.closePath();
+  ctx.moveTo(-9,0); ctx.lineTo(0,-8); ctx.lineTo(r-14,0); ctx.lineTo(0,8); ctx.closePath();
   const hot = state.rpm >= 12000;
   ctx.fillStyle = hot ? c.danger : c.accent;
   ctx.shadowColor = hot ? c.danger : c.accent;
-  ctx.shadowBlur = 16;
+  ctx.shadowBlur = 18;
   ctx.fill();
   ctx.restore();
 
@@ -438,25 +484,28 @@ function drawRace(c){
   ctx.fillStyle = c.text;
   ctx.font = 'bold 24px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText((state.rpm/1000).toFixed(1) + ' x1000 rpm', cx, 324);
+  ctx.fillText((state.rpm/1000).toFixed(1) + ' x1000 rpm', cx, 320);
 
+  // thanh thông tin full màn phía dưới
   ctx.fillStyle = c.panel2;
-  rr(18,390,764,42,16,true);
+  rr(18,350,764,76,18,true);
   ctx.fillStyle = c.sub;
   ctx.font = 'bold 13px Arial';
   ctx.textAlign = 'left';
-  ctx.fillText('TEMP', 34, 408);
-  ctx.fillText('GPS', 244, 408);
-  ctx.fillText('HEAD', 442, 408);
-  ctx.fillText('MODE', 636, 408);
-  ctx.font = 'bold 18px Arial';
+  ctx.fillText('TEMP', 36, 374);
+  ctx.fillText('GPS', 236, 374);
+  ctx.fillText('HEAD', 432, 374);
+  ctx.fillText('MODE', 622, 374);
+
+  ctx.font = 'bold 26px Arial';
   ctx.fillStyle = c.text;
-  ctx.fillText(`${state.temperature ?? '--'}°C`, 34, 426);
-  ctx.fillText((state.sats || 0) + ' sat', 244, 426);
-  ctx.fillText(Math.round(state.heading || 0) + '°', 442, 426);
+  ctx.fillText(`${state.temperature ?? '--'}°C`, 36, 408);
+  ctx.fillText((state.sats || 0) + ' sat', 236, 408);
+  ctx.fillText(Math.round(state.heading || 0) + '°', 432, 408);
   ctx.fillStyle = c.accent;
-  ctx.fillText('RACE', 636, 426);
+  ctx.fillText('RACE', 622, 408);
 }
+
 
 function draw(){
   state.gear = autoGear(state.speedKmh);
@@ -470,15 +519,8 @@ function draw(){
   drawCommonFooter(c);
 }
 
-setToast('Bấm <b>Bật GPS</b> để lấy vị trí thật, tốc độ thật và nhiệt độ đúng tại nơi bạn đang đứng.');
+setToast('Bấm <b>Bật GPS</b> để lấy vị trí thật, tốc độ thật đã lọc chống rung khi đứng yên, và nhiệt độ đúng tại nơi bạn đang đứng.');
 draw();
 </script>
 </body>
 </html>
-"""
-
-path = "/mnt/data/dashboard-fullscreen-gps-nhietdo-vitri-hientai.html"
-with open(path, "w", encoding="utf-8") as f:
-    f.write(html)
-
-print(path)
