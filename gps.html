@@ -23,6 +23,10 @@ html,body{margin:0;width:100%;height:100%;font-family:Inter,Arial,sans-serif;bac
 #overlay{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:block;pointer-events:none}
 #hud{
   position:absolute; inset:12px 12px auto 12px; z-index:3; display:flex; justify-content:space-between; gap:10px; pointer-events:none;
+  opacity:1; transform:translateY(0); transition:opacity .35s ease, transform .35s ease;
+}
+#hud.auto-hidden{
+  opacity:0; transform:translateY(-14px);
 }
 #leftTools, #rightTools{display:flex; gap:8px; pointer-events:auto}
 .btn{
@@ -50,6 +54,8 @@ html,body{margin:0;width:100%;height:100%;font-family:Inter,Arial,sans-serif;bac
       <button id="modeBtn" class="btn">Touring</button>
     </div>
     <div id="rightTools">
+      <button id="bikeThemeBtn" class="btn">Ducati</button>
+      <button id="lapBtn" class="btn">Lap</button>
       <button id="themeBtn" class="btn">Night</button>
       <button id="followBtn" class="btn">Follow</button>
     </div>
@@ -67,6 +73,10 @@ const gpsBtn = document.getElementById('gpsBtn');
 const modeBtn = document.getElementById('modeBtn');
 const themeBtn = document.getElementById('themeBtn');
 const followBtn = document.getElementById('followBtn');
+const bikeThemeBtn = document.getElementById('bikeThemeBtn');
+const lapBtn = document.getElementById('lapBtn');
+const hud = document.getElementById('hud');
+let hudHideTimer = null;
 
 let mode = 'touring';
 let follow = true;
@@ -89,7 +99,14 @@ const state = {
   temperature: null,
   weatherText: 'Đang chờ thời tiết...',
   rpm: 4200,
-  gear: 1
+  gear: 1,
+  overspeedShake: 0,
+  trackMode: true,
+  lapStart: null,
+  lapCurrentMs: 0,
+  lapBestMs: null,
+  lapLastMs: null,
+  bikeTheme: 'ducati'
 };
 
 function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
@@ -100,6 +117,27 @@ const routeLine = L.polyline([], { color:'#35b6ff', weight:6, opacity:0.85 }).ad
 const marker = L.circleMarker([state.lat, state.lng], { radius:8, color:'#35b6ff', weight:3, fillColor:'#87dcff', fillOpacity:1 }).addTo(map);
 const accuracyCircle = L.circle([state.lat, state.lng], { radius:0, color:'#35b6ff', weight:1, fillColor:'#35b6ff', fillOpacity:0.08 }).addTo(map);
 const track = [];
+
+function showHudTemporarily(customDelay){
+  hud.classList.remove('auto-hidden');
+  if(hudHideTimer) clearTimeout(hudHideTimer);
+  const delay = customDelay || 7000;
+  hudHideTimer = setTimeout(() => {
+    hud.classList.add('auto-hidden');
+  }, delay);
+}
+
+function wireHudActivity(){
+  const wake = () => showHudTemporarily(7000);
+
+  ['pointerdown','touchstart','mousemove'].forEach(evt => {
+    document.addEventListener(evt, wake, { passive:true });
+  });
+
+  [gpsBtn, modeBtn, themeBtn, followBtn, bikeThemeBtn, lapBtn].forEach(btn => {
+    btn.addEventListener('click', () => showHudTemporarily(9000));
+  });
+}
 
 function setToast(msg){ toast.innerHTML = msg; }
 
@@ -233,7 +271,7 @@ function startGps(){
 
     if(follow) map.setView([latitude, longitude], Math.max(map.getZoom(), 16), { animate:true });
 
-    setToast(`GPS đang chạy • ${state.speedKmh.toFixed(1)} km/h • Accuracy ${accuracy ? Math.round(accuracy) + 'm' : '--'} • ${state.temperature ?? '--'}°C`);
+    setToast('');
     draw();
   }, err => {
     const msg = {
@@ -269,6 +307,32 @@ followBtn.onclick = () => {
   followBtn.textContent = follow ? 'Follow' : 'Free';
 };
 
+bikeThemeBtn.onclick = () => {
+  const order = ['ducati', 'r1', 'zx10r'];
+  const idx = order.indexOf(state.bikeTheme);
+  state.bikeTheme = order[(idx + 1) % order.length];
+  bikeThemeBtn.textContent = state.bikeTheme.toUpperCase();
+  draw();
+};
+
+lapBtn.onclick = () => {
+  const now = performance.now();
+  if(state.lapStart === null){
+    state.lapStart = now;
+    state.lapCurrentMs = 0;
+    state.lapLastMs = null;
+    lapBtn.textContent = 'Lap 1';
+  }else{
+    const lap = now - state.lapStart;
+    state.lapLastMs = lap;
+    state.lapBestMs = state.lapBestMs == null ? lap : Math.min(state.lapBestMs, lap);
+    state.lapStart = now;
+    state.lapCurrentMs = 0;
+    lapBtn.textContent = 'Lap+';
+  }
+  draw();
+};
+
 function rr(x,y,w,h,r,fill=true){
   ctx.beginPath();
   ctx.moveTo(x+r,y);
@@ -292,6 +356,30 @@ function palette(){
     return { text:'#102231', sub:'#607b90', panel:'rgba(240,246,251,.80)', panel2:'rgba(224,236,246,.88)', accent:'#0b84ff', ok:'#1ca154', amber:'#c98600', danger:'#df5b5b' };
   }
   return { text:'#eef8ff', sub:'#97aec2', panel:'rgba(10,18,28,.70)', panel2:'rgba(8,14,22,.82)', accent:'#35b6ff', ok:'#49d47c', amber:'#ffc857', danger:'#ff6e6e' };
+}
+
+function bikeThemeColors(){
+  const themes = {
+    ducati: {
+      bg: '#000000', speed: '#ffffff', gear: '#ff3b30', green: '#00ff88', amber: '#ffaa00', red: '#ff2222', accent: '#ff3b30', sub: '#cfcfcf'
+    },
+    r1: {
+      bg: '#020814', speed: '#f5fbff', gear: '#2ea8ff', green: '#00ff99', amber: '#ffd34d', red: '#ff4d4d', accent: '#2ea8ff', sub: '#c9d8e6'
+    },
+    zx10r: {
+      bg: '#020b03', speed: '#f2fff3', gear: '#5dff6f', green: '#5dff6f', amber: '#d6ff38', red: '#ff5a5a', accent: '#5dff6f', sub: '#cadcca'
+    }
+  };
+  return themes[state.bikeTheme] || themes.ducati;
+}
+
+function formatMs(ms){
+  if(ms == null) return '--:--.---';
+  const total = Math.max(0, Math.floor(ms));
+  const m = Math.floor(total / 60000);
+  const s = Math.floor((total % 60000) / 1000);
+  const mm = total % 1000;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(mm).padStart(3,'0')}`;
 }
 
 function drawTopBadges(c){
@@ -395,131 +483,151 @@ function drawShiftLights(c){
 }
 
 function drawRace(c){
-  drawShiftLights(c);
+  const t = bikeThemeColors();
+  const overspeed = state.speedKmh >= 120;
+  const hot = state.rpm >= 12000;
 
-  // nền card full màn cho race
-  ctx.fillStyle = c.panel;
-  rr(10,44,780,388,26,true);
-
-  // speed block trái
-  ctx.fillStyle = c.panel2;
-  rr(24,76,250,260,22,true);
-  ctx.fillStyle = c.text;
-  ctx.font = '900 120px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(String(Math.round(state.speedKmh)), 149, 210);
-  ctx.fillStyle = c.sub;
-  ctx.font = 'bold 22px Arial';
-  ctx.fillText('km/h', 149, 248);
-
-  // gear block giữa
-  ctx.fillStyle = c.panel2;
-  rr(290,76,150,260,22,true);
-  ctx.fillStyle = c.text;
-  ctx.font = '900 132px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(String(state.gear), 365, 205);
-  ctx.fillStyle = c.sub;
-  ctx.font = 'bold 18px Arial';
-  ctx.fillText('GEAR', 365, 245);
-
-  // tachometer block phải full lớn hơn
-  ctx.fillStyle = c.panel2;
-  rr(454,76,318,260,22,true);
-
-  const cx = 613, cy = 214, r = 128;
-  const start = Math.PI*0.78, end = Math.PI*2.22;
-
-  ctx.beginPath();
-  ctx.strokeStyle = c.panel;
-  ctx.lineWidth = 20;
-  ctx.arc(cx, cy, r, start, end);
-  ctx.stroke();
-
-  for(let i=0;i<=16;i++){
-    const a = start + (end-start)*(i/16);
-    const tickColor = i < 12 ? c.sub : c.danger;
-    line(cx+Math.cos(a)*(r-22), cy+Math.sin(a)*(r-22), cx+Math.cos(a)*(r+6), cy+Math.sin(a)*(r+6), 3, tickColor);
-    ctx.fillStyle = tickColor;
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(i), cx+Math.cos(a)*(r-46), cy+Math.sin(a)*(r-46));
+  if(overspeed){
+    state.overspeedShake = Math.min(state.overspeedShake + 0.18, 1);
+  }else{
+    state.overspeedShake = Math.max(state.overspeedShake - 0.12, 0);
   }
 
-  const ang = start + (end-start)*(state.rpm / 16000);
-  const grad = ctx.createLinearGradient(500,90,760,300);
-  grad.addColorStop(0, c.ok);
-  grad.addColorStop(.65, c.accent);
-  grad.addColorStop(1, c.danger);
-
-  ctx.beginPath();
-  ctx.strokeStyle = grad;
-  ctx.lineWidth = 20;
-  ctx.arc(cx, cy, r, start, ang);
-  ctx.stroke();
+  const shakeX = overspeed ? Math.sin(Date.now()/28) * 5 * state.overspeedShake : 0;
+  const shakeY = overspeed ? Math.cos(Date.now()/36) * 3 * state.overspeedShake : 0;
 
   ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(ang);
-  ctx.beginPath();
-  ctx.moveTo(-9,0); ctx.lineTo(0,-8); ctx.lineTo(r-14,0); ctx.lineTo(0,8); ctx.closePath();
-  const hot = state.rpm >= 12000;
-  ctx.fillStyle = hot ? c.danger : c.accent;
-  ctx.shadowColor = hot ? c.danger : c.accent;
-  ctx.shadowBlur = 18;
-  ctx.fill();
-  ctx.restore();
+  ctx.translate(shakeX, shakeY);
 
-  ctx.fillStyle = c.text;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 12, 0, Math.PI*2);
-  ctx.fill();
+  // nền full đen kiểu race
+  ctx.fillStyle = t.bg;
+  ctx.fillRect(-10,-10,840,520);
 
-  ctx.fillStyle = state.rpm >= 12000 ? c.danger : c.accent;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 5, 0, Math.PI*2);
-  ctx.fill();
+  // viền trên / shift light bar
+  const maxBars = 20;
+  const activeBars = Math.floor((state.rpm / 16000) * maxBars);
+  for(let i=0;i<maxBars;i++){
+    let color = '#1a1a1a';
+    if(i < activeBars){
+      if(i < 10) color = t.green;
+      else if(i < 16) color = t.amber;
+      else color = t.red;
+    }
+    if(hot && i >= 16){
+      color = (Math.floor(Date.now()/90) % 2 === 0) ? '#ffffff' : t.red;
+    }
+    ctx.fillStyle = color;
+    rr(18 + i*38, 18, 30, 14, 4, true);
+  }
 
-  ctx.fillStyle = c.text;
-  ctx.font = 'bold 24px Arial';
+  // track mode badge
+  ctx.fillStyle = overspeed ? t.red : t.accent;
+  rr(20, 48, 118, 28, 12, true);
+  ctx.fillStyle = '#081018';
+  ctx.font = '900 14px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText((state.rpm/1000).toFixed(1) + ' x1000 rpm', cx, 320);
+  ctx.fillText('TRACK MODE', 79, 67);
 
-  // thanh thông tin full màn phía dưới
-  ctx.fillStyle = c.panel2;
-  rr(18,350,764,76,18,true);
-  ctx.fillStyle = c.sub;
+  // lap timing panel
+  ctx.fillStyle = '#101010';
+  rr(560, 46, 220, 84, 14, true);
+  ctx.fillStyle = t.sub;
   ctx.font = 'bold 13px Arial';
   ctx.textAlign = 'left';
-  ctx.fillText('TEMP', 36, 374);
-  ctx.fillText('GPS', 236, 374);
-  ctx.fillText('HEAD', 432, 374);
-  ctx.fillText('MODE', 622, 374);
+  ctx.fillText('CURRENT', 576, 70);
+  ctx.fillText('BEST', 576, 96);
+  ctx.fillText('LAST', 576, 122);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 16px Arial';
+  ctx.fillText(formatMs(state.lapCurrentMs), 764, 70);
+  ctx.fillText(formatMs(state.lapBestMs), 764, 96);
+  ctx.fillText(formatMs(state.lapLastMs), 764, 122);
 
-  ctx.font = 'bold 26px Arial';
-  ctx.fillStyle = c.text;
-  ctx.fillText(`${state.temperature ?? '--'}°C`, 36, 408);
-  ctx.fillText((state.sats || 0) + ' sat', 236, 408);
-  ctx.fillText(Math.round(state.heading || 0) + '°', 432, 408);
-  ctx.fillStyle = c.accent;
-  ctx.fillText('RACE', 622, 408);
+  // gear trái
+  ctx.fillStyle = t.accent;
+  ctx.font = '900 128px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText(String(state.gear), 34, 188);
+
+  ctx.fillStyle = t.sub;
+  ctx.font = 'bold 20px Arial';
+  ctx.fillText('GEAR', 42, 212);
+
+  // tốc độ giữa
+  ctx.fillStyle = t.speed;
+  ctx.font = '900 170px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(String(Math.round(state.speedKmh)), 400, 268);
+
+  ctx.fillStyle = t.sub;
+  ctx.font = 'bold 30px Arial';
+  ctx.fillText('km/h', 400, 312);
+
+  // rpm nhỏ góc phải
+  ctx.textAlign = 'right';
+  ctx.fillStyle = hot ? t.red : t.speed;
+  ctx.font = 'bold 34px Arial';
+  ctx.fillText((state.rpm/1000).toFixed(1) + 'k', 780, 178);
+
+  // overspeed warning
+  if(overspeed){
+    const flashOn = Math.floor(Date.now()/120) % 2 === 0;
+    ctx.fillStyle = flashOn ? t.red : '#ffffff';
+    rr(300, 330, 200, 38, 16, true);
+    ctx.fillStyle = flashOn ? '#fff' : '#111';
+    ctx.font = '900 22px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('OVERSPEED', 400, 356);
+  }
+
+  // bottom info strip
+  ctx.fillStyle = '#0e0e0e';
+  rr(18, 392, 764, 72, 18, true);
+
+  const items = [
+    ['TEMP', `${state.temperature ?? '--'}°C`, t.speed],
+    ['GPS', `${state.sats || 0} sat`, t.speed],
+    ['HEAD', `${Math.round(state.heading || 0)}°`, t.speed],
+    ['THEME', state.bikeTheme.toUpperCase(), t.accent],
+  ];
+
+  items.forEach((item, i) => {
+    const x = 34 + i*188;
+    ctx.fillStyle = t.sub;
+    ctx.font = 'bold 13px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(item[0], x, 416);
+    ctx.fillStyle = item[2];
+    ctx.font = 'bold 26px Arial';
+    ctx.fillText(item[1], x, 446);
+  });
+
+  ctx.restore();
 }
-
 
 function draw(){
   state.gear = autoGear(state.speedKmh);
   state.rpm = calcRpm(state.speedKmh, state.gear);
 
+  if(state.lapStart !== null){
+    state.lapCurrentMs = performance.now() - state.lapStart;
+  }
+
   ctx.clearRect(0,0,800,480);
   const c = palette();
-  drawTopBadges(c);
-  if(mode === 'touring') drawTouring(c);
-  else drawRace(c);
-  drawCommonFooter(c);
+  if(mode === 'touring'){
+    drawTopBadges(c);
+    drawTouring(c);
+    drawCommonFooter(c);
+  }else{
+    drawRace(c);
+  }
 }
 
-setToast('Bấm <b>Bật GPS</b> để lấy vị trí thật, tốc độ thật đã lọc chống rung khi đứng yên, và nhiệt độ đúng tại nơi bạn đang đứng.');
+setToast('');
+wireHudActivity();
+showHudTemporarily(8000);
 draw();
 </script>
 </body>
