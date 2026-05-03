@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PRO - Tính lãi lỗ showroom xe</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f6fb;color:#172033}
+    .wrap{max-width:1400px;margin:auto;padding:20px}
+    .hero{background:linear-gradient(135deg,#111827,#1d4ed8);color:#fff;border-radius:22px;padding:26px;margin-bottom:18px;box-shadow:0 10px 30px rgba(0,0,0,.14)}
+    .hero h1{margin:0 0 8px;font-size:28px}.hero p{margin:0;opacity:.9}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 8px 22px rgba(15,23,42,.08);border:1px solid #e6edf7}.card h3{margin:0 0 12px;font-size:17px;color:#0f172a}
+    label{display:block;font-size:13px;margin:10px 0 5px;color:#475569}input{width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:12px;font-size:14px;outline:none}input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.btn{border:0;border-radius:14px;padding:12px 18px;font-weight:700;cursor:pointer}.primary{background:#2563eb;color:#fff}.dark{background:#111827;color:#fff}.light{background:#e2e8f0;color:#111827}
+    .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:16px 0}.kpi{background:#fff;border-radius:18px;padding:16px;box-shadow:0 8px 22px rgba(15,23,42,.08);border:1px solid #e6edf7}.kpi small{color:#64748b}.kpi b{display:block;margin-top:7px;font-size:20px}.good{color:#16a34a}.bad{color:#dc2626}.warn{color:#d97706}
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.chartBox{background:#fff;border-radius:18px;padding:16px;box-shadow:0 8px 22px rgba(15,23,42,.08);border:1px solid #e6edf7;min-height:360px}.chartBox canvas{max-height:310px}
+    .tableWrap{background:#fff;border-radius:18px;padding:16px;box-shadow:0 8px 22px rgba(15,23,42,.08);border:1px solid #e6edf7;margin-top:14px;overflow:auto}table{width:100%;border-collapse:collapse;min-width:1200px}th,td{border-bottom:1px solid #e5e7eb;padding:10px;text-align:right;font-size:13px}th{background:#f8fafc;color:#334155;position:sticky;top:0}td:first-child,th:first-child{text-align:center}.note{font-size:13px;color:#64748b;line-height:1.5;margin-top:8px}
+    @media(max-width:1100px){.grid{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}}
+    @media(max-width:640px){.grid,.kpis{grid-template-columns:1fr}.wrap{padding:12px}.hero h1{font-size:22px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>📊 PRO - Tính lãi lỗ showroom xe</h1>
+    <p>Dự báo 5 năm, biểu đồ Chart.js, tính chi phí vận hành, lãi vay, tồn kho và vốn bị giam trong hàng tồn.</p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>💰 Vốn & ngân hàng</h3>
+      <label>Vốn/vay ngân hàng</label><input id="von" value="10000000000">
+      <label>Lãi suất %/năm</label><input id="laiSuat" value="9">
+      <label>Số tháng dự báo</label><input id="soThang" value="60">
+    </div>
+
+    <div class="card">
+      <h3>🚗 Bán hàng</h3>
+      <label>Xe bán tháng đầu</label><input id="xeThangDau" value="60">
+      <label>Mỗi tháng tăng thêm xe</label><input id="tangXe" value="10">
+      <label>Lãi bình quân/xe</label><input id="laiMoiXe" value="1500000">
+    </div>
+
+    <div class="card">
+      <h3>🏢 Chi phí vận hành</h3>
+      <label>Lương quản lý kiêm sale</label><input id="luongQL" value="12000000">
+      <label>Lương kế toán</label><input id="luongKT" value="7000000">
+      <label>Lương kỹ thuật</label><input id="luongKyThuat" value="8000000">
+      <label>Thuê nhà</label><input id="thueNha" value="10000000">
+      <label>Điện nước</label><input id="dienNuoc" value="2000000">
+      <label>Marketing/khuyến mãi</label><input id="marketing" value="0">
+      <label>Chi phí khác</label><input id="chiPhiKhac" value="0">
+    </div>
+
+    <div class="card">
+      <h3>📦 Tồn kho xe</h3>
+      <label>Giá vốn bình quân/xe</label><input id="giaVonXe" value="35000000">
+      <label>Tồn kho đầu kỳ</label><input id="tonDau" value="200">
+      <label>Nhập thêm xe/tháng</label><input id="nhapThang" value="100">
+      <label>Chi phí lưu kho/bảo quản/xe/tháng</label><input id="chiPhiTonXe" value="50000">
+      <label>Hao hụt/giảm giá tồn kho %/tháng</label><input id="haoHutTon" value="0.2">
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" onclick="tinhToan()">TÍNH NGAY</button>
+    <button class="btn light" onclick="napMau10Ty()">Nạp mẫu 10 tỷ</button>
+    <button class="btn dark" onclick="xuatCSV()">Xuất CSV</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="charts">
+    <div class="chartBox"><h3>📈 Lãi/lỗ từng tháng</h3><canvas id="profitChart"></canvas></div>
+    <div class="chartBox"><h3>📦 Tồn kho & vốn bị giam</h3><canvas id="stockChart"></canvas></div>
+    <div class="chartBox"><h3>💵 Lũy kế lợi nhuận 5 năm</h3><canvas id="cumChart"></canvas></div>
+    <div class="chartBox"><h3>🥧 Cơ cấu chi phí tháng đầu</h3><canvas id="costChart"></canvas></div>
+  </div>
+
+  <div class="tableWrap">
+    <h3>📋 Bảng chi tiết 5 năm</h3>
+    <div class="note">Lưu ý: “Lãi/lỗ thực” = lãi bán xe - lãi vay - chi phí vận hành - chi phí tồn kho - hao hụt tồn kho. Chưa tính thuế TNDN, chi phí đăng ký xe hộ khách, công nợ xấu, thưởng hãng hoặc chiết khấu phát sinh.</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Tháng</th><th>Xe bán</th><th>Lãi bán xe</th><th>Lãi vay</th><th>Vận hành</th><th>Chi phí tồn</th><th>Hao hụt tồn</th><th>Lãi/lỗ tháng</th><th>Lũy kế</th><th>Tồn cuối</th><th>Vốn giam tồn</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let rows = [];
+let charts = {};
+const $ = id => document.getElementById(id);
+const num = id => Number(String($(id).value).replaceAll(',','')) || 0;
+// format tiền dạng 1.000.000 đ (đủ 000.000)
+const money = v => {
+  let n = Math.round(v);
+  return n.toLocaleString('vi-VN') + ' đ';
+};
+// bỏ rút gọn triệu/tỷ -> luôn hiển thị đầy đủ
+const shortMoney = v => money(v);
+function destroyChart(id){ if(charts[id]) charts[id].destroy(); }
+
+function tinhToan(){
+  const von = num('von'), laiSuat = num('laiSuat'), soThang = Math.max(1, num('soThang'));
+  const xeDau = num('xeThangDau'), tangXe = num('tangXe'), laiMoiXe = num('laiMoiXe');
+  const vanHanh = num('luongQL') + num('luongKT') + num('luongKyThuat') + num('thueNha') + num('dienNuoc') + num('marketing') + num('chiPhiKhac');
+  const laiVayThang = von * laiSuat / 100 / 12;
+  const giaVonXe = num('giaVonXe'), nhapThang = num('nhapThang'), chiPhiTonXe = num('chiPhiTonXe'), haoHutPct = num('haoHutTon') / 100;
+  let ton = num('tonDau');
+  let luyKe = 0, tongXe = 0, tongLaiXe = 0, tongLaiVay = 0, tongVanHanh = 0, tongTon = 0, tongHaoHut = 0;
+  rows = [];
+
+  for(let m=1; m<=soThang; m++){
+    const xeBanDuKien = xeDau + (m-1)*tangXe;
+    const tonCoTheBan = ton + nhapThang;
+    const xeBan = Math.min(xeBanDuKien, tonCoTheBan);
+    const tonCuoi = Math.max(0, tonCoTheBan - xeBan);
+    const laiBanXe = xeBan * laiMoiXe;
+    const chiPhiTon = tonCuoi * chiPhiTonXe;
+    const vonGiamTon = tonCuoi * giaVonXe;
+    const haoHutTon = vonGiamTon * haoHutPct;
+    const laiLo = laiBanXe - laiVayThang - vanHanh - chiPhiTon - haoHutTon;
+    luyKe += laiLo;
+    tongXe += xeBan; tongLaiXe += laiBanXe; tongLaiVay += laiVayThang; tongVanHanh += vanHanh; tongTon += chiPhiTon; tongHaoHut += haoHutTon;
+    rows.push({m, xeBan, laiBanXe, laiVayThang, vanHanh, chiPhiTon, haoHutTon, laiLo, luyKe, tonCuoi, vonGiamTon});
+    ton = tonCuoi;
+  }
+
+  const tongLaiLo = rows.at(-1).luyKe;
+  const tongChiThang = laiVayThang + vanHanh + (rows[0]?.chiPhiTon || 0) + (rows[0]?.haoHutTon || 0);
+  const hoaVon = Math.ceil((laiVayThang + vanHanh) / Math.max(1,laiMoiXe));
+  const namDau = rows.slice(0,12).reduce((s,r)=>s+r.laiLo,0);
+  const tonCuoi = rows.at(-1).tonCuoi;
+
+  $('kpis').innerHTML = `
+    <div class="kpi"><small>Hòa vốn chưa tính tồn kho</small><b>${hoaVon} xe/tháng</b></div>
+    <div class="kpi"><small>Lãi/lỗ năm đầu</small><b class="${namDau>=0?'good':'bad'}">${shortMoney(namDau)}</b></div>
+    <div class="kpi"><small>Lãi/lỗ 5 năm</small><b class="${tongLaiLo>=0?'good':'bad'}">${shortMoney(tongLaiLo)}</b></div>
+    <div class="kpi"><small>Tổng xe bán</small><b>${tongXe.toLocaleString('vi-VN')} xe</b></div>
+    <div class="kpi"><small>Tồn cuối kỳ</small><b class="${tonCuoi>0?'warn':'good'}">${tonCuoi.toLocaleString('vi-VN')} xe</b></div>
+  `;
+
+  $('tbody').innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.m}</td><td>${r.xeBan.toLocaleString('vi-VN')}</td><td>${money(r.laiBanXe)}</td><td>${money(r.laiVayThang)}</td><td>${money(r.vanHanh)}</td><td>${money(r.chiPhiTon)}</td><td>${money(r.haoHutTon)}</td><td class="${r.laiLo>=0?'good':'bad'}">${money(r.laiLo)}</td><td class="${r.luyKe>=0?'good':'bad'}">${money(r.luyKe)}</td><td>${r.tonCuoi.toLocaleString('vi-VN')}</td><td>${money(r.vonGiamTon)}</td>
+    </tr>`).join('');
+
+  veBieuDo(tongLaiVay, tongVanHanh, tongTon, tongHaoHut);
+}
+
+function veBieuDo(tongLaiVay, tongVanHanh, tongTon, tongHaoHut){
+  const labels = rows.map(r=>'T'+r.m);
+  destroyChart('profitChart');
+  charts.profitChart = new Chart($('profitChart'), {
+    type:'bar',
+    data:{labels,datasets:[{label:'Lãi/lỗ tháng',data:rows.map(r=>Math.round(r.laiLo/1e6))}]},
+    options:{responsive:true,plugins:{tooltip:{callbacks:{label:c=>c.raw+' triệu'}}},scales:{y:{ticks:{callback:v=>v+' tr'}}}}
+  });
+
+  destroyChart('stockChart');
+  charts.stockChart = new Chart($('stockChart'), {
+    type:'line',
+    data:{labels,datasets:[{label:'Tồn cuối (xe)',data:rows.map(r=>r.tonCuoi),yAxisID:'y'},{label:'Vốn giam tồn (tỷ)',data:rows.map(r=>+(r.vonGiamTon/1e9).toFixed(2)),yAxisID:'y1'}]},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{y:{position:'left'},y1:{position:'right',grid:{drawOnChartArea:false}}}}
+  });
+
+  destroyChart('cumChart');
+  charts.cumChart = new Chart($('cumChart'), {
+    type:'line',
+    data:{labels,datasets:[{label:'Lũy kế lợi nhuận (tỷ)',data:rows.map(r=>+(r.luyKe/1e9).toFixed(2)),fill:true}]},
+    options:{responsive:true,scales:{y:{ticks:{callback:v=>v+' tỷ'}}}}
+  });
+
+  destroyChart('costChart');
+  const first = rows[0] || {laiVayThang:0,vanHanh:0,chiPhiTon:0,haoHutTon:0};
+  charts.costChart = new Chart($('costChart'), {
+    type:'doughnut',
+    data:{labels:['Lãi vay','Vận hành','Chi phí tồn','Hao hụt tồn'],datasets:[{data:[first.laiVayThang,first.vanHanh,first.chiPhiTon,first.haoHutTon]}]},
+    options:{responsive:true,plugins:{tooltip:{callbacks:{label:c=>c.label+': '+money(c.raw)}}}}
+  });
+}
+
+function xuatCSV(){
+  if(!rows.length) tinhToan();
+  const header = ['Thang','Xe ban','Lai ban xe','Lai vay','Van hanh','Chi phi ton','Hao hut ton','Lai lo thang','Luy ke','Ton cuoi','Von giam ton'];
+  const body = rows.map(r => [r.m,r.xeBan,r.laiBanXe,r.laiVayThang,r.vanHanh,r.chiPhiTon,r.haoHutTon,r.laiLo,r.luyKe,r.tonCuoi,r.vonGiamTon].join(','));
+  const csv = [header.join(','),...body].join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'lai-lo-showroom-5-nam.csv'; a.click();
+}
+
+function napMau10Ty(){
+  $('von').value=10000000000; $('laiSuat').value=9; $('soThang').value=60;
+  $('xeThangDau').value=60; $('tangXe').value=10; $('laiMoiXe').value=1500000;
+  $('luongQL').value=12000000; $('luongKT').value=7000000; $('luongKyThuat').value=8000000;
+  $('thueNha').value=10000000; $('dienNuoc').value=2000000; $('marketing').value=0; $('chiPhiKhac').value=0;
+  $('giaVonXe').value=35000000; $('tonDau').value=200; $('nhapThang').value=100; $('chiPhiTonXe').value=50000; $('haoHutTon').value=0.2;
+  tinhToan();
+}
+
+window.onload = tinhToan;
+</script>
+</body>
+</html>
